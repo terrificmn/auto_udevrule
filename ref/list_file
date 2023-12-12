@@ -1,0 +1,12 @@
+## a list of devices
+## it will be used for symlink name 
+## if any device newly needs, then add its name the above.
+zltech-motor
+faduino-upload
+faduino-com
+front-lidar
+rear-lidar
+esp
+conv-faduino-upload
+conv-faduino-com
+## astra 아스트라는 따로 해야할 듯 함.

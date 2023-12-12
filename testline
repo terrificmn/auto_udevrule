@@ -1,0 +1,124 @@
+[
+1
+2
+5
+2
+4
+.
+6
+1
+2
+5
+0
+7
+]
+
+u
+s
+b
+ 
+1
+-
+9
+.
+2
+.
+1
+:
+ 
+p
+l
+2
+3
+0
+3
+ 
+c
+o
+n
+v
+e
+r
+t
+e
+r
+ 
+n
+o
+w
+ 
+a
+t
+t
+a
+c
+h
+e
+d
+ 
+t
+o
+ 
+t
+t
+y
+U
+S
+B
+0
+
+
+추출 예: dmesg 용
+
+[12614.670634] usb 1-9.2.1: \
+usb 1-9.2.1: pl2303 
+usb 1-9.2.2: pl2303 converter
+usb 1-9.2.1: FTDI USB Serial Device converter now attached to ttyUSB1
+[12524.612507] usb 1-9.2.1: pl2303 converter now attached to ttyUSB0
+[12612.210855] pl2303 ttyUSB0: pl2303 converter now disconnected from ttyUSB0
+[12613.572544] usb 1-9.2.2: pl2303 converter now attached to ttyUSB0
+[12614.669504] ftdi_sio ttyUSB1: Unable to write latency timer: -32
+[12614.670634] usb 1-9.2.1: FTDI USB Serial Device converter now attached to ttyUSB1
+
+
+추출 예2: udevadm 용
+
+P: /devices/pci0000:00/0000:00:14.0/usb1/1-9/1-9.2/1-9.2.1/1-9.2.1:1.0/ttyUSB1/tty/ttyUSB1
+N: ttyUSB1
+L: 0
+S: serial/by-path/pci-0000:00:14.0-usb-0:9.2.1:1.0-port0
+S: serial/by-id/usb-FTDI_USB_Serial_Converter_FTC11S2U-if00-port0
+E: DEVPATH=/devices/pci0000:00/0000:00:14.0/usb1/1-9/1-9.2/1-9.2.1/1-9.2.1:1.0/ttyUSB1/tty/ttyUSB1
+E: DEVNAME=/dev/ttyUSB1
+E: MAJOR=188
+E: MINOR=1
+E: SUBSYSTEM=tty
+E: USEC_INITIALIZED=12614862217
+E: ID_BUS=usb
+E: ID_VENDOR_ID=0403
+E: ID_MODEL_ID=6001
+E: ID_PCI_CLASS_FROM_DATABASE=Serial bus controller
+E: ID_PCI_SUBCLASS_FROM_DATABASE=USB controller
+E: ID_PCI_INTERFACE_FROM_DATABASE=XHCI
+E: ID_VENDOR_FROM_DATABASE=Future Technology Devices International, Ltd
+E: ID_VENDOR=FTDI
+E: ID_VENDOR_ENC=FTDI
+E: ID_MODEL=USB_Serial_Converter
+E: ID_MODEL_ENC=USB\x20Serial\x20Converter
+E: ID_REVISION=0600
+E: ID_SERIAL=FTDI_USB_Serial_Converter_FTC11S2U
+E: ID_SERIAL_SHORT=FTC11S2U
+E: ID_TYPE=generic
+E: ID_USB_INTERFACES=:ffffff:
+E: ID_USB_INTERFACE_NUM=00
+E: ID_USB_DRIVER=ftdi_sio
+E: ID_MODEL_FROM_DATABASE=FT232 Serial (UART) IC
+E: ID_PATH=pci-0000:00:14.0-usb-0:9.2.1:1.0
+E: ID_PATH_TAG=pci-0000_00_14_0-usb-0_9_2_1_1_0
+E: ID_MM_CANDIDATE=1
+E: ID_FOR_SEAT=tty-pci-0000_00_14_0-usb-0_9_2_1_1_0
+E: ID_MM_DEVICE_IGNORE=1
+E: ID_MM_PORT_IGNORE=1
+E: DEVLINKS=/dev/serial/by-path/pci-0000:00:14.0-usb-0:9.2.1:1.0-port0 /dev/serial/by-id/usb-FTDI_USB_Serial_Converter_FTC11S2U-if00-port0
+E: TAGS=:uaccess:systemd:seat:
+

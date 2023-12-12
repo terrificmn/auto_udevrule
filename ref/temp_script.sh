@@ -1,0 +1,1 @@
+SUBSYSTEM=="tty", KERNELS=="1-3", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE:="0666", GROUP:="dialout", SYMLINK+="ttyZltechMotor"
