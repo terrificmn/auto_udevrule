@@ -135,11 +135,10 @@ void UdevMaker::makeScript(std::fstream* fs) {
 
 
 bool UdevMaker::copyUdev() {
-    // test 이후 udev_path 로 바꿔주기 - target부분
-    /// test
-    std::string cmd = "cp " + this->file_path + "/temp_script.sh " + this->file_path + "/" + this->udev_filename;
-    /// to udev_path
-    // std::string cmd = "cp " + this->file_path + "/temp_script.sh " + this->udev_path + "/" + this->udev_filename;
+    /// test: ref 디렉토리에 그대로 복사함 
+    // std::string cmd = "cp " + this->file_path + "/temp_script.sh " + this->file_path + "/" + this->udev_filename;
+    /// to udev_path : /etc/ 이하 디렉토리로 복사하게 됨.
+    std::string cmd = "sudo cp " + this->file_path + "/temp_script.sh " + this->udev_path + "/" + this->udev_filename;
     
     std::cout << "cmd: " << cmd << std::endl;
     bool res = std::system(cmd.c_str());
@@ -154,6 +153,7 @@ bool UdevMaker::copyUdev() {
     }
 
     //final
+    std::cout << "udevadm reload rules... done.\n";
     return true;
 }
 

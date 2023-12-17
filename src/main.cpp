@@ -162,7 +162,6 @@ int main(int argc, char** argv) {
             udevMaker.makeScript(&fsScript);
             fsScript.close();
 
-            // 또는 직접 /etc쪽에 만들어주기
             if(udevMaker.copyUdev()) {
                 std::cout << "\n== Copy complete!! ==\n\n";
             }
