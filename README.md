@@ -18,9 +18,13 @@ g++ -std=c++17 -o getudev src/main.cpp src/usb_checker.cpp src/udev_maker.cpp -I
 
 ## github에서 getudev 다운
 전체 소스코드 다운 할 필요 없이   
-(테스트는 안해봤지만), getudev 파일 다운 받아서 바로 실행 가능 할 듯..  
-권한 때문에 실행이 안된다면, `chmod +x ./getudev` 해 준 후 실행   
+(테스트는 안해봤지만), getudev 파일 다운 받아서 바로 실행 가능 하다..   
 
+[깃허브에서 실행 파일 다운로드](https://github.com/terrificmn/auto_udevrule/blob/main/getudev)  
+
+권한 때문에 실행이 안 된다면, `chmod +x ./getudev` 해 준 후 실행   
+
+> Rocky Linux 9 실행 가능, Ubuntu 20.04 테스트 필요...
 
 
 ## 옵션 -s, -m, -h   
