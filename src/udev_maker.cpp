@@ -161,3 +161,38 @@ bool UdevMaker::copyUdev() {
 int UdevMaker::getVSize() {
     return this->v_device_list.size();
 }
+
+void UdevMaker::createBasicList() {
+    std::fstream fs;
+    const std::filesystem::path current_dir = std::filesystem::current_path();
+    const std::filesystem::path ref_path = current_dir / "ref";
+    if(std::filesystem::is_directory(ref_path)) {
+        std::cerr << "It seems there is the 'ref' directory already but list_file does not exist...\n";
+    } else {
+        std::string mkdir_path = "mkdir -p " + ref_path.string();
+        // std::cout << "mkdir path : " << mkdir_path << std::endl; 
+        std::system(mkdir_path.c_str());
+        std::cout << "ref directory created.\n";
+    }
+
+    std::cout << "Now.. the initial set-up begins..\n";
+
+    fs.open("ref/list_file", std::ios::out);
+    if(fs.is_open()) {
+        fs << "## a list of devices\n";
+        fs << "## It will be used for the file name and symlink name.\n";
+        fs << "## If any device newly needs, then add its name the below.\n";
+        fs << "zltech-motor\n";
+        fs << "faduino-upload\n";
+        fs << "faduino-com\n";
+        fs << "front-lidar\n";
+        fs << "rear-lidar\n";
+        fs << "esp\n";
+        fs << "conv-faduino-upload\n";
+        fs << "conv-faduino-com\n";
+    }
+    fs.close();
+    std::cout << "A list_file has been created.\n";
+    std::cout << "Each device name in the list_file will be used for the symlink name and file name.\n";
+    std::cout << "So you can modify or add some devices in the list_file if you need.\n";
+}

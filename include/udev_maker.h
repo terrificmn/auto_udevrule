@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <filesystem>  // c++17
 
 enum Type {
     READ, WRITE
@@ -45,6 +46,8 @@ public:
     void makeScript(std::fstream* fs);
     bool copyUdev();
     int getVSize();
+
+    void createBasicList();
 
 };
 

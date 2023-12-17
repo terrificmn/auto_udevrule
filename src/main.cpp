@@ -45,6 +45,9 @@ int main(int argc, char** argv) {
     bool open_res = udevMaker.openFile(&fsFile, "list_file", Type::READ); //or out
     if(!open_res) {
         std::cerr << "file open failure [list_file]" << std::endl;
+        udevMaker.createBasicList();
+        fsFile.close();
+        std::cout << "Please execute the program again~.\n";
         return 1;
     }
         // 

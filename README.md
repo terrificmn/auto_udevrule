@@ -5,8 +5,10 @@ usb로 연결된 장치의 장치id, 커널id, 벤더id, 모델id 등을 추출�
 
 빌드하기
 ```
-g++ -std=c++14 -o getudev src/main.cpp src/usb_checker.cpp src/udev_maker.cpp -I include
+g++ -std=c++17 -o getudev src/main.cpp src/usb_checker.cpp src/udev_maker.cpp -I include
 ```
+
+> std::filesystem 추가로 인해서 c++17 버전으로 빌드
 
 
 실행 
@@ -25,8 +27,16 @@ g++ -std=c++14 -o getudev src/main.cpp src/usb_checker.cpp src/udev_maker.cpp -I
 - -h : 파라미터 설명
 
 ## ref 디렉토리
+(새로 업데이트 OnDec17 2023) 처음 실행파일만 있고 다른 파일이 없을 경우에는  
+ref 디렉토리 및 list_file 을 만들어 준다. 최초 실행만 해주면 된다.  
+
 ref/list_file 에서 리스트 목록을 불러오므로 실행 파일과 `ref/list_file` 은 같이 있어야 함.   
-리스트에서는 한 줄에 하나씩 넣어주고, - 로 구분해서 넣어준다.  
+
+이제 이 목록에서의 이름은 /etc/udev/... 에 들어갈 파일이름으로 저장이 된다.  
+
+(**필수**) 항상 리스트에서는 한 줄에 하나씩 넣어주고, - 로 구분해서 넣어준다.   
+이유는 **-** 를 구분해서 심링크 이름으로 카멜케이스 형식으로 만들어준다.   
+
 주석처리가 필요할 경우에는 # 으로 주석처리 한다. 
 
 예:
@@ -35,5 +45,7 @@ ref/list_file 에서 리스트 목록을 불러오므로 실행 파일과 `ref/l
 zltech-motor
 faduino-upload
 ```
+
+실행 후 파일명은 90-zltech-motor 식으로 만들어지고, 장치를 검색했을 경우 `/dev/ttyZltechMotor` 로 표시되게 된다.  
 
 
