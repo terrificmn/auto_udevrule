@@ -1,12 +1,16 @@
 #ifndef DEVICE_ENUM_H
 #define DEVICE_ENUM_H
 
-enum DeviceName {
-    FADUINO_COM, FADUINO_UPLOAD, FRONT_LIDAR, REAR_LIDAR 
+enum TTYDevice {
+    USB, ACM
 };
 
-enum Cmd {
-    DMESG, UDEVADM
+enum ResultType {
+    LAST_RESULT_ONLY, WHOLE_RESULT
+};
+
+enum Mode {
+    SINGLE_MODE, MULTI_MODE, DELETE_MODE, INPUT_MODE
 };
 
 #endif

@@ -1,28 +1,55 @@
 #include <iostream>
 #include <string>
-#include "usb_checker.h"
+#include <filesystem>  // c++17
 #include "udev_maker.h"
+#include "manager.h"
 #include "device_enum.h"
+#include "lua_config.h"
+#include "sudo_manager.h"
+
+constexpr const char* VERSION = "2.9.0";
+
+extern "C" {
+    #include <lua.h>
+    #include <lualib.h>
+    #include <lauxlib.h>
+    //// 우분투 case
+    // #include <lua5.3/lua.h>
+    // #include <lua5.3/lualib.h>
+    // #include <lua5.3/lauxlib.h>
+}
 
 void helpMsg();
 
 int main(int argc, char** argv) {
-    bool is_multi_mode = false;
-
+    Mode mode = Mode::SINGLE_MODE;
     /// parameter part
     if(argc == 2) {
         std::string argv_str = argv[1];
         if(argv_str == "-s") {
             // std::cout << argv[1] << std::endl;
-            std::cout << "single mode selected" << std::endl;
+            std::cout << "*single mode selected*" << std::endl;
+            mode = Mode::SINGLE_MODE;
 
         } else if(argv_str == "-m") {
             // std::cout << argv[1] << std::endl; // multiple use (like 10 times)
-            std::cout << "multi mode selected" << std::endl;
-            is_multi_mode = true;
+            std::cout << "*multi mode selected*" << std::endl;
+            mode = Mode::MULTI_MODE;
+
+        } else if(argv_str == "-d") {
+            std::cout << "*delete mode selected*" << std::endl;
+            mode = Mode::DELETE_MODE;
+
+        } else if(argv_str == "-i") {
+            std::cout << "*input mode selected*" << std::endl;
+            mode = Mode::INPUT_MODE;
 
         } else if(argv_str == "-h" || argv_str == "--help" ) {
             helpMsg();
+            return 1;
+
+        } else if(argv_str == "-v" || argv_str == "--version" ) {
+            std::cout << "version: " << VERSION << std::endl;
             return 1;
 
         } else {
@@ -35,150 +62,32 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    /// usb check part
-    UdevMaker udevMaker;
-    UsbChecker usbChecker(&udevMaker);
-    std::string str_input;
-    std::fstream fsFile;
+    
+    /// lua config setting
+    bool open_config_result = LuaConfig::initialze("config.lua");
 
-    /// read list : preparation for symlink names and script file names.
-    bool open_res = udevMaker.openFile(&fsFile, "list_file", Type::READ); //or out
-    if(!open_res) {
-        std::cerr << "file open failure [list_file]" << std::endl;
-        udevMaker.createBasicList();
-        fsFile.close();
+    /// usb check part
+    UdevMaker udevMaker(false);
+    bool open_list_result = udevMaker.initialize();
+
+    if(!open_list_result || !open_config_result ) {
         std::cout << "Please execute the program again~.\n";
         return 1;
     }
-        // 
-    std::cout << "Reading a config file for an udev list...";
-    udevMaker.saveVector(&fsFile);
-    fsFile.close();
-    std::cout << " Done\n";
 
-
-    if(!is_multi_mode) {
-        std::cout << "== Please choose the device you want to detect.." << std::endl;
-        udevMaker.printList();
-        std::cin >> str_input;
-
-        /// input check
-        bool res_num = usbChecker.checkNumber(str_input);  // only 숫자
-        if(!res_num) {
-            std::cerr << "only number available" << std::endl;
-            return 1;
-        }
-
-        bool res = usbChecker.detectUsb(); // default 1  // single use
-        // bool res =true; // 강제로 설정 --- 테스트 후 삭제하기
-        if(!res) {
-            std::cerr << "error\n";
-            return 1;
-        }
-
-        // detection 이후 
-        udevMaker.setSymlink(std::stoi(str_input));
-        std::fstream fsScript;
-        bool open_res = udevMaker.openFile(&fsScript, "temp_script.sh", Type::WRITE);
-        if(!open_res) {
-            std::cerr << "file open failure" << std::endl;
-            return 1;
-        }
-
-        udevMaker.makeScript(&fsScript);
-        fsScript.close();
-
-        // 또는 직접 /etc쪽에 만들어주기
-        // 테스트 주석 처리
-        if(udevMaker.copyUdev()) {
-            std::cout << "\n== Copy complete!! ==\n\n";
-        }
-    
-    } else { // multi_mode
-        bool is_auto = false;
-        std::cout << "== Please select the mode" << std::endl;
-        std::cout << "==>auto mode 0 : you can enter 0 to find it in order in a list." << std::endl;
-        std::cout << "==>manual mode 1+ : you can enter any number except 0." << std::endl;
-        std::cin >> str_input;
-        
-        /// input check
-        bool res_num = usbChecker.checkNumber(str_input);  // only 숫자
-        if(!res_num) {
-            std::cerr << "only number available" << std::endl;
-            return 1;
-        }
-
-        if(str_input == "0") {
-            std::cout << "auto seletect" << std::endl;
-            is_auto = true;
-        }
-
-        for(int i=0; i < udevMaker.getVSize(); ++i ) {
-            if(is_auto) {
-                std::cout << "== Please plug in another device(usb cable)." << std::endl;
-                std::cout << "If plugged already, please press any key.. It will be continued to dectect the usb device.." << std::endl;
-                std::cout << "OR you can just hit ^c to exit.." << std::endl;
-                std::cin >> str_input;  // just use for blocking
-
-                bool res = usbChecker.detectUsb(); // default 1  // single use
-                if(!res) {
-                    std::cerr << "error\n";
-                    return 1;
-                }
-                // detection 이후 
-                udevMaker.setSymlink(i+1);  // 리스트를 1부터 출력해서 처리했으므로... 위의 입력과는 관계 없음. (순차적으로 만듬)
-                
-
-            } else {  // 입력 받은 INPUT 으로 처리 (싱글과 유사)
-                // 결국 싱글의 반복
-                std::cout << "== Please choose the device you want to detect.." << std::endl;
-                std::cout << "OR you can just hit ^c to exit.." << std::endl;
-                udevMaker.printList();
-                std::cin >> str_input;
-                /// input check
-                bool res_num = usbChecker.checkNumber(str_input);  // only 숫자
-                if(!res_num) {
-                    std::cerr << "only number available" << std::endl;
-                    return 1;
-                }
-
-                bool res = usbChecker.detectUsb(); // default 1  // single use
-                if(!res) {
-                    std::cerr << "error\n";
-                    return 1;
-                }
-
-                udevMaker.setSymlink(std::stoi(str_input)); //  입력 받은 값으로 symlink 이름 만들기
-            }
-
-            // FOR 문에서 공통 처리 부분
-            std::fstream fsScript;
-            bool open_res = udevMaker.openFile(&fsScript, "temp_script.sh", Type::WRITE);
-            if(!open_res) {
-                std::cerr << "file open failure" << std::endl;
-                return 1;
-            }
-
-            udevMaker.makeScript(&fsScript);
-            fsScript.close();
-
-            if(udevMaker.copyUdev()) {
-                std::cout << "\n== Copy complete!! ==\n\n";
-            }
-                
-        } // end for loop
-
-    }
-
+    Manager manager(&udevMaker, mode);
+    manager.execute();
 
     return 0;
 }
 
 
-
 void helpMsg() {
-    std::cout << "help: add parameter -s or -m" << std::endl;
+    std::cout << "help: add parameter -s, -m, or -d" << std::endl;
     std::cout << "-s: single use" << std::endl;
     std::cout << "-m: multiple use" << std::endl;
-    std::cout << "-h: help message" << std::endl;
+    std::cout << "-d: delete udevrules" << std::endl;
+    std::cout << "-i: input mode manually" << std::endl;
+    std::cout << "-v OR --version: version info" << std::endl;
+    std::cout << "-h OR --help: help message" << std::endl;
 }
