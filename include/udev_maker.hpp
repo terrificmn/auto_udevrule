@@ -11,10 +11,6 @@
 #include "sub_process_writer.hpp"
 #include "device_enum.hpp"
 
-enum Type {
-    READ, WRITE, DELETE
-};
-
 class UdevMaker {
 public:
     UdevMaker(bool policy_kit_use);
@@ -22,7 +18,6 @@ public:
 
     bool initialize();
     bool getIsPolicyKitNeeded();
-    std::string m_dir_file_name, m_filename;
     bool setSymlink(int v_list_index, std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
     void setSymlinkNameByType(const std::string& user_input, std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
     std::string makeSymlinkFilename(const std::string& user_input_str);
@@ -48,6 +43,12 @@ public:
     void createConfigLua();
     bool inputDevInfo(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
 
+protected:
+    std::vector<std::string> v_device_list;
+    std::vector<std::string> v_symlink_list;
+    std::string udev_filename = "";
+    bool is_policy_kit_needed;
+
 private:
     std::string file_path = "./ref";
     std::string udev_path = "/etc/udev/rules.d";
@@ -56,19 +57,6 @@ private:
     std::string prefix_udevrule_number = "90";
     const char* HELPER_WRITER_FILENAME = "helper_writer";
     std::string HELPER_WRITER_FULL_PATH;
-    // std::string symlink_name
-    // std::string dir_file_name="/etc/udev/rules.d/"
-    // std::string kerel="3-6.3"
-    // std::string vendor="0403"
-    // std::string product="6001"
-    // std::string symlink_name="ttyZltech"
-    // std::string filename="98-zltech-motor.rules"
-        
-protected:
-    std::vector<std::string> v_device_list;
-    std::vector<std::string> v_symlink_list;
-    std::string udev_filename = "";
-    bool is_policy_kit_needed;
 
 };
 

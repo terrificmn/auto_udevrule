@@ -14,12 +14,6 @@
 #include <regex>
 #include <algorithm>
 
-struct ResultData {
-    std::string result_str;
-    TTYDevice tty_device = TTYDevice::USB;
-    int found_device_num = -1;
-};
-
 class UsbInfoConfirmer {
 public:
     UsbInfoConfirmer(UdevMaker* udevMaker);
