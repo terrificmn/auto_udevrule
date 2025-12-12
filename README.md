@@ -87,7 +87,7 @@ g++ -std=c++17 -o helper_writer sub-src/helper_writer.cpp
 
 메인 프로그램
 ```
-g++ -std=c++17 -o getudev src/main.cpp src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/manager.cpp src/time_checker.cpp src/sudo_manager.cpp -I `pwd`/include -llua5.3 -ldl -DUBUNTU_20=true
+g++ -std=c++17 -o getudev src/main.cpp src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/manager.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua5.3 -ldl -DUBUNTU_20=true
 ```
 > ubuntu 22 또는 fedora 에서는 -llua 이면 충분
 

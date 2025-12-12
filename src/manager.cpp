@@ -191,24 +191,20 @@ int Manager::makeUdevRule(const std::string& input_str) {
     // detection 이후 
     this->ptrUdevMaker->setSymlink(std::stoi(input_str));
 
-    /// temp_script 만든 후에 복사하는 방식. 작동ok  -- stdin 으로 sub program 실행으로 변경 -on May12,2025
-    // {
-    //     std::fstream fsScript;
-    //     bool open_res = this->ptrUdevMaker->openFile(&fsScript, "temp_script.sh", Type::WRITE);
-    //     if(!open_res) {
-    //         std::cerr << "file open failure" << std::endl;
-    //         return false;
-    //     }
-    //     this->ptrUdevMaker->makeScript(&fsScript);
-    //     fsScript.close();
-    //     if(this->ptrUdevMaker->copyUdev()) {
-    //         std::cout << "\n== Copy complete!! ==\n\n";
-    //     }
-    // }
-    
+    if(this->ptrUdevMaker->getIsPolicyKitNeeded()) {   
+        int res = this->ptrUdevMaker->createUdevRuleFileWithFork();
+        if(res == 0) {
+            std::vector<std::string> cmd_result_data;
+            std::string cmd = "udevadm control --reload-rules; udevadm trigger";
+            this->mUsbInfoConfirmer.executeCmd(cmd_result_data, cmd, ResultType::EXECUTE_ONLY);
+            return 0;
+        }
+        return res;
 
-    // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
-    return this->ptrUdevMaker->createUdevruleFile();
+    } else {
+        // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
+        return this->ptrUdevMaker->createUdevRuleFile();
+    }
 }
 
 bool Manager::inputMode() {
@@ -232,8 +228,8 @@ bool Manager::inputMode() {
         return false;
     }
 
-    bool result = this->makeUdevRule(str_input);
-    if(!result) {
+    int result = this->makeUdevRule(str_input);
+    if(result != 0) {
         return false;
     }
 

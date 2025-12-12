@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <cstdio>  // popen
 #include "lua_config.hpp"
+#include "sub_process_writer.hpp"
 
 enum Type {
     READ, WRITE, DELETE
@@ -44,7 +45,8 @@ public:
     void makeContent(std::string& udev_str);
     bool copyUdev();
     bool executeUdevadmControl();
-    int createUdevruleFile();
+    int createUdevRuleFile();
+    int createUdevRuleFileWithFork();
     int deleteUdevruleFile(const std::string& input_str);
     bool getUdevFilename(std::string* return_filename, int list_index);
     std::string& getUdevRuleFilename();

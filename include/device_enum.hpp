@@ -6,7 +6,7 @@ enum TTYDevice {
 };
 
 enum ResultType {
-    LAST_RESULT_ONLY, WHOLE_RESULT
+    LAST_RESULT_ONLY, WHOLE_RESULT, EXECUTE_ONLY
 };
 
 enum Mode {

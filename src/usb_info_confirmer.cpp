@@ -308,6 +308,25 @@ void UsbInfoConfirmer::executeCmd(std::vector<std::string>& cmd_result_data, con
         fclose(stream);
 
         cmd_result_data = std::move(lines);
+    
+    } else if(process_result_type == ResultType::EXECUTE_ONLY) {
+        char buffer[256];
+        ssize_t count;
+        std::string result;
+        
+        while((count = read(pipefd[0], buffer, sizeof(buffer) -1)) > 0) {
+            buffer[count] = '\0'; // add null-terminate : 한번 읽을 때 바이트 수 만큼 읽어오는데, 마지막 인데스에 null-terminate 를 해줌
+            result += buffer;
+            // std::cout << "-- read once\n";
+            // std::cout << "--result: " << buffer <<  std::endl;
+        }
+
+        /// Last result count -1 --> error
+        if(count == -1) {
+            perror("read");
+        }
+        std::cout << "EXECUTE_ONLY result: " << result << std::endl;
+        /// FYI:cmd_result_data is not used in this case.
     }
  
     close(pipefd[0]);

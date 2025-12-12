@@ -303,16 +303,10 @@ bool UdevMaker::executeUdevadmControl() {
     return true;
 }
 
-int UdevMaker::createUdevruleFile() {
+int UdevMaker::createUdevRuleFile() {
     std::cout << "Now.. writing begins..\n";
     // std::string helper_writer_path = this->HELPER_WRITER_FULL_PATH;
-    std::string cmd;
-    if(!this->is_policy_kit_needed) {
-        cmd = "sudo " + this->HELPER_WRITER_FULL_PATH;
-    } else {
-        cmd = "pkexec bash -c \"" + this->HELPER_WRITER_FULL_PATH + "\"";
-    }
-
+    std::string cmd = "sudo " + this->HELPER_WRITER_FULL_PATH;
     std::string target_udev_path = this->udev_path + "/" + this->getUdevRuleFilename();
     ////DEBUG
     std::cout << "Atempting to write to " << target_udev_path << std::endl;
@@ -387,6 +381,47 @@ int UdevMaker::createUdevruleFile() {
     }
 
     return 0; // finally!
+}
+
+int UdevMaker::createUdevRuleFileWithFork() {
+    SubProcessWriter subProcessWriter;
+
+    /// process 
+    /// 1. open file
+    /// 2. send the path
+    /// 3. send "NEW" for making a file.
+    /// 4. send the actual content
+    std::string target_udev_path = this->udev_path + "/" + this->getUdevRuleFilename();
+    std::cout << "Atempting to write to " << target_udev_path << std::endl;
+
+    bool res = subProcessWriter.startProcess(this->HELPER_WRITER_FULL_PATH);
+    if(!res) {
+        return 1;
+    }
+
+     // 2. send udev path : //FYI: '\n' 을 붙여야지 Heler writer 에서 입력이 완료
+    if(!subProcessWriter.writeLine(target_udev_path)) {
+        std::cerr << "Failed to write the target path" << std::endl;
+        return -3;
+    }
+    ///FYI: no need to use fflush rather than fprintf with popen
+
+    /// 3. "NEW" keyword 로 보내야 create mode 가 작동함
+    if(!subProcessWriter.writeLine("NEW")) {
+        std::cerr << "Failed to write the mode" << std::endl;
+        return -4;
+    }
+
+    /// 4. send the actual content
+    std::string udev_content;
+    this->makeContent(udev_content);
+
+    if(!subProcessWriter.writeContent(udev_content)) {
+        std::cerr << "Failed to write content to Helper Writer's stdin" << std::endl;
+        return -5;
+    }
+
+    return subProcessWriter.finishProcess();
 }
 
 
