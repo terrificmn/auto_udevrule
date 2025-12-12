@@ -1,5 +1,5 @@
-#ifndef SUDO_MANAGER_H
-#define SUDO_MANAGER_H
+#ifndef SUDO_MANAGER_HPP
+#define SUDO_MANAGER_HPP
 
 #include <iostream>
 
@@ -18,4 +18,4 @@ private:
 
 };
 
-#endif // SUDO_MANAGER_H
+#endif // SUDO_MANAGER_HPP

@@ -1,5 +1,5 @@
-#ifndef USB_CHECKER_H
-#define USB_CHECKER_H
+#ifndef USB_INFO_CONFIRMER_HPP
+#define USB_INFO_CONFIRMER_HPP
 
 #include <iostream>
 #include <string>
@@ -7,9 +7,9 @@
 #include <array>
 #include <unistd.h>
 #include <sys/wait.h>
-#include "device_enum.h"
-#include "udev_maker.h"
-#include "time_checker.h"
+#include "device_enum.hpp"
+#include "udev_maker.hpp"
+#include "time_checker.hpp"
 
 #include <regex>
 #include <algorithm>
@@ -19,9 +19,9 @@ struct ResultData {
     TTYDevice tty_device = TTYDevice::USB;
 };
 
-class UsbChecker {
+class UsbInfoConfirmer {
 public:
-    UsbChecker(UdevMaker* udevMaker);
+    UsbInfoConfirmer(UdevMaker* udevMaker);
     ResultData findNewDevice(const int& try_count);
     std::vector<std::string> findUdevInfo(const bool& is_acm_detected);
     std::string getUsbId();
@@ -53,4 +53,4 @@ private:
     std::string ls_rule_result;
 };
 
-#endif
+#endif //USB_INFO_CONFIRMER_HPP

@@ -1,5 +1,5 @@
-#ifndef UDEV_MAKER_H
-#define UDEV_MAKER_H
+#ifndef UDEV_MAKER_HPP
+#define UDEV_MAKER_HPP
 
 #include <string>
 #include <iostream>
@@ -8,7 +8,7 @@
 #include <filesystem>  // c++17
 #include <unordered_map>
 #include <cstdio>  // popen
-#include "lua_config.h"
+#include "lua_config.hpp"
 
 enum Type {
     READ, WRITE, DELETE
@@ -83,4 +83,4 @@ protected:
 
 };
 
-#endif
+#endif //UDEV_MAKER_HPP

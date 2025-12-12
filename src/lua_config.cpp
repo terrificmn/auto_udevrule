@@ -1,4 +1,4 @@
-#include "lua_config.h"
+#include "lua_config.hpp"
 
 lua_State* LuaConfig::s_L = nullptr;
 std::string LuaConfig::config_path = getenv("HOME");

@@ -1,5 +1,5 @@
-#ifndef DEVICE_ENUM_H
-#define DEVICE_ENUM_H
+#ifndef DEVICE_ENUM_HPP
+#define DEVICE_ENUM_HPP
 
 enum TTYDevice {
     USB, ACM
@@ -13,4 +13,4 @@ enum Mode {
     SINGLE_MODE, MULTI_MODE, DELETE_MODE, INPUT_MODE
 };
 
-#endif
+#endif // DEVICE_ENUM_HPP

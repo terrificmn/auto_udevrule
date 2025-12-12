@@ -1,22 +1,22 @@
 #include <iostream>
 #include <string>
 #include <filesystem>  // c++17
-#include "udev_maker.h"
-#include "manager.h"
-#include "device_enum.h"
-#include "lua_config.h"
-#include "sudo_manager.h"
+#include "udev_maker.hpp"
+#include "manager.hpp"
+#include "device_enum.hpp"
+#include "lua_config.hpp"
+#include "sudo_manager.hpp"
 
 constexpr const char* VERSION = "2.9.0";
 
 extern "C" {
-    #include <lua.h>
-    #include <lualib.h>
-    #include <lauxlib.h>
+    // #include <lua.h>
+    // #include <lualib.h>
+    // #include <lauxlib.h>
     //// 우분투 case
-    // #include <lua5.3/lua.h>
-    // #include <lua5.3/lualib.h>
-    // #include <lua5.3/lauxlib.h>
+    #include <lua5.3/lua.h>
+    #include <lua5.3/lualib.h>
+    #include <lua5.3/lauxlib.h>
 }
 
 void helpMsg();

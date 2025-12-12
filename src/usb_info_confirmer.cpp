@@ -1,8 +1,8 @@
-#include "usb_checker.h"
+#include "usb_info_confirmer.hpp"
 
-UsbChecker::UsbChecker(UdevMaker* udevMaker) : ptrUdevMaker(udevMaker) { }
+UsbInfoConfirmer::UsbInfoConfirmer(UdevMaker* udevMaker) : ptrUdevMaker(udevMaker) { }
 
-ResultData UsbChecker::findNewDevice(const int& try_count) {
+ResultData UsbInfoConfirmer::findNewDevice(const int& try_count) {
     std::vector<std::string> v_result_data;
     ResultData resultData;
 
@@ -58,7 +58,7 @@ ResultData UsbChecker::findNewDevice(const int& try_count) {
     return std::move(resultData);
 }
 
-std::vector<std::string> UsbChecker::findUdevInfo(const bool& is_acm_detected) {
+std::vector<std::string> UsbInfoConfirmer::findUdevInfo(const bool& is_acm_detected) {
     std::string usb_id = this->getUsbId();
     // std::cout << "detected id: " << usb_id << std::endl; // acm 포함
     
@@ -76,7 +76,7 @@ std::vector<std::string> UsbChecker::findUdevInfo(const bool& is_acm_detected) {
 }
 
 /// 테스트
-// void UsbChecker::getCmdResult(std::vector<std::string>& cmd_result_data, const std::string& cmd_str, int process_result_type) {
+// void UsbInfoConfirmer::getCmdResult(std::vector<std::string>& cmd_result_data, const std::string& cmd_str, int process_result_type) {
 //     // FILE *fp;
 //     char var[256];
 //     std::array<char, 128> buffer;
@@ -114,7 +114,7 @@ std::vector<std::string> UsbChecker::findUdevInfo(const bool& is_acm_detected) {
 //     // pclose(fp);
 // }
 
-void UsbChecker::getCmdResult(std::vector<std::string>& cmd_result_data, const std::string& cmd_str, int process_result_type) {
+void UsbInfoConfirmer::getCmdResult(std::vector<std::string>& cmd_result_data, const std::string& cmd_str, int process_result_type) {
     std::cout << "command: " << cmd_str << std::endl;
     int pipefd[2];
     if(pipe(pipefd) == -1) {
@@ -219,11 +219,11 @@ void UsbChecker::getCmdResult(std::vector<std::string>& cmd_result_data, const s
 }
 
 
-std::string UsbChecker::getUsbId() {
+std::string UsbInfoConfirmer::getUsbId() {
     return this->m_usb_num_str;
 }
 
-std::string UsbChecker::regexWrapper(std::string& last_message, std::string reg_str) {
+std::string UsbInfoConfirmer::regexWrapper(std::string& last_message, std::string reg_str) {
     std::regex reg(reg_str);
     std::smatch mat;
 
@@ -245,7 +245,7 @@ std::string UsbChecker::regexWrapper(std::string& last_message, std::string reg_
 /// @brief find kernel id from string. example "usb 1-10.3: ...."
 /// @param last_message 
 /// @return 
-std::string UsbChecker::getKernelId(std::string& last_message) {
+std::string UsbInfoConfirmer::getKernelId(std::string& last_message) {
     /// 
     std::string reg_str = "(usb \\d-.+:)";
     std::string return_data;
@@ -267,7 +267,7 @@ std::string UsbChecker::getKernelId(std::string& last_message) {
 /// @brief Retrieve time which at is detected or detached. 
 /// @param last_message 
 /// @return 
-std::string UsbChecker::getDetectedTime(std::string& last_message) {
+std::string UsbInfoConfirmer::getDetectedTime(std::string& last_message) {
     std::string reg_str = "\\d.+?\\]"; /// 처음 리눅스 시간만 가져오기 마지막 ] 까지 
     std::string return_data;
     std::string result = this->regexWrapper(last_message, reg_str);
@@ -285,7 +285,7 @@ std::string UsbChecker::getDetectedTime(std::string& last_message) {
     return std::move(return_data);
 }
 
-std::string UsbChecker::getKernelIdForAcm(std::string& last_message) {
+std::string UsbInfoConfirmer::getKernelIdForAcm(std::string& last_message) {
     /// 
     std::string reg_str = "\\d-.+?:";
     std::string return_data;
@@ -304,7 +304,7 @@ std::string UsbChecker::getKernelIdForAcm(std::string& last_message) {
     return return_data;
 }
 
-std::string UsbChecker::getVenderId(std::string& last_message) {
+std::string UsbInfoConfirmer::getVenderId(std::string& last_message) {
     // vendor id 뽑기
     // ID_VENDOR_ID=
     std::string reg_str = "(ID_VENDOR_ID=)";
@@ -315,7 +315,7 @@ std::string UsbChecker::getVenderId(std::string& last_message) {
 }
 
 
-std::string UsbChecker::getModelId(std::string& last_message) {
+std::string UsbInfoConfirmer::getModelId(std::string& last_message) {
     // model id 추출
     // ID_MODEL_ID
     std::string reg_str = "(ID_MODEL_ID=)";
@@ -325,7 +325,7 @@ std::string UsbChecker::getModelId(std::string& last_message) {
     return return_data;
 }
 
-std::string UsbChecker::getSerialId(std::string& last_message) {
+std::string UsbInfoConfirmer::getSerialId(std::string& last_message) {
     // serial 넘버 추출
     // ID_SERIAL_SHORT
     std::string reg_str = "(ID_SERIAL_SHORT=)";
@@ -339,7 +339,7 @@ std::string UsbChecker::getSerialId(std::string& last_message) {
 /// @brief  vendor id or model id can be extracted here
 /// @param last_message 
 /// @return 
-std::string UsbChecker::getIdsAterRegex(std::string& last_message) {
+std::string UsbInfoConfirmer::getIdsAterRegex(std::string& last_message) {
     // 실제 model id 추출
     std::string return_data;
     size_t last_index = last_message.find_first_of('=');
@@ -357,12 +357,12 @@ std::string UsbChecker::getIdsAterRegex(std::string& last_message) {
 }
 
 
-void UsbChecker::removeCharacter(std::string& str, char remove_char) {
+void UsbInfoConfirmer::removeCharacter(std::string& str, char remove_char) {
     str.erase(std::remove(str.begin(), str.end(), remove_char), str.cend());
 }
 
 
-bool UsbChecker::checkNumber(std::string& input_msg) {
+bool UsbInfoConfirmer::checkNumber(std::string& input_msg) {
     std::string reg_str = "[0-9]";
     std::string return_data;
     std::string result_str = this->regexWrapper(input_msg, reg_str);
@@ -372,7 +372,7 @@ bool UsbChecker::checkNumber(std::string& input_msg) {
     return true;
 }
 
-int UsbChecker::showResult() {
+int UsbInfoConfirmer::showResult() {
     ///DEBUG
     std::cout << "symlink name " << this->ptrUdevMaker->udevInfo.symlink_name << std::endl;
     // std::cout << "rule file name: " << this->ptrUdevMaker->getUdevRuleFilename() << std::endl;
@@ -417,11 +417,11 @@ int UsbChecker::showResult() {
     return 0;
 }
 
-std::string UsbChecker::getLsResult() {
+std::string UsbInfoConfirmer::getLsResult() {
     return this->ls_rule_result;
 }
 
-bool UsbChecker::detectUsb() {
+bool UsbInfoConfirmer::detectUsb() {
     ResultData resultData;
     bool is_acm_detected = false; //default
 
@@ -480,7 +480,7 @@ bool UsbChecker::detectUsb() {
 
     std::string res_vender_id, res_model_id, res_serial_id;
     for(int i=0; i< v_udev_str.size(); ++i) {
-        // res_vender_id = usbChecker.getVenderId(v_udev_str[i]);
+        // res_vender_id = UsbInfoConfirmer.getVenderId(v_udev_str[i]);
         if(this->getVenderId(v_udev_str[i]).empty() == false) {
             res_vender_id = v_udev_str[i];
         } 

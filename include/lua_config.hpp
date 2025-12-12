@@ -1,13 +1,13 @@
-#ifndef LUA_CONFIG_H
-#define LUA_CONFIG_H
+#ifndef LUA_CONFIG_HPP
+#define LUA_CONFIG_HPP
 extern "C" {
-    #include <lua.h>
-    #include <lualib.h>
-    #include <lauxlib.h>
+    // #include <lua.h>
+    // #include <lualib.h>
+    // #include <lauxlib.h>
     //// 우분투 case
-    // #include <lua5.3/lua.h>
-    // #include <lua5.3/lualib.h>
-    // #include <lua5.3/lauxlib.h>
+    #include <lua5.3/lua.h>
+    #include <lua5.3/lualib.h>
+    #include <lua5.3/lauxlib.h>
 }
 #include <iostream>
 #include <filesystem>
@@ -34,4 +34,4 @@ public:
 
 
 
-#endif  // LUA_CONFIG_H
+#endif  // LUA_CONFIG_HPP

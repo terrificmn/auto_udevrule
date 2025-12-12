@@ -1,9 +1,9 @@
-#ifndef MANAGER_H
-#define MANAGER_H
+#ifndef MANAGER_HPP
+#define MANAGER_HPP
 
-#include "device_enum.h"
-#include "udev_maker.h"
-#include "usb_checker.h"
+#include "device_enum.hpp"
+#include "udev_maker.hpp"
+#include "usb_info_confirmer.hpp"
 #include <thread>
 
 class Manager {
@@ -26,4 +26,4 @@ private:
     Mode m_mode;
 
 };
-#endif
+#endif //MANAGER_HPP

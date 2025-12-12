@@ -1,10 +1,10 @@
-#ifndef TIME_CHECKER_H
-#define TIME_CHECKER_H
+#ifndef TIME_CHECKER_HPP
+#define TIME_CHECKER_HPP
 
 #include <iostream>
 #include <chrono>
 #include <fstream>
-#include "lua_config.h"
+#include "lua_config.hpp"
 
 class TimeChecker {
 public:
@@ -18,4 +18,4 @@ private:
 
 };
 
-#endif //TIME_CHECKER_H
+#endif //TIME_CHECKER_HPP

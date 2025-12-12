@@ -1,4 +1,4 @@
-#include "sudo_manager.h"
+#include "sudo_manager.hpp"
 
 SudoManager::SudoManager() {
     this->has_sudo_privilege = this->checkIfSudoPrivilege();

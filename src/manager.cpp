@@ -1,4 +1,4 @@
-#include "manager.h"
+#include "manager.hpp"
 
 Manager::Manager(UdevMaker* udevMaker, const Mode& mode) 
                                     : ptrUdevMaker(udevMaker), m_mode(mode) {
@@ -32,7 +32,7 @@ void Manager::execute() {
 }
 
 std::string Manager::inputList(const std::string& str_print) {
-    UsbChecker usbChecker(this->ptrUdevMaker);
+    UsbInfoConfirmer usbInfoConfirmer(this->ptrUdevMaker);
     std::string str_input;
 
     std::cout << "== Please choose the device you want to " << str_print << std::endl;
@@ -45,7 +45,7 @@ std::string Manager::inputList(const std::string& str_print) {
     }
 
     /// input check
-    bool res_num = usbChecker.checkNumber(str_input);  // only 숫자
+    bool res_num = usbInfoConfirmer.checkNumber(str_input);  // only 숫자
     if(!res_num) {
         std::cerr << "only number available" << std::endl;
         return std::string();
@@ -62,9 +62,9 @@ bool Manager::singleMode() {
         return false;
     }
     
-    UsbChecker usbChecker(this->ptrUdevMaker);
+    UsbInfoConfirmer usbInfoConfirmer(this->ptrUdevMaker);
     /// detect usb device
-    bool res = usbChecker.detectUsb();
+    bool res = usbInfoConfirmer.detectUsb();
     if(!res) {
         std::cerr << "error\n";
         return false;
@@ -96,10 +96,10 @@ bool Manager::singleMode() {
     std::cout << "\n== Copy complete!! ==\n\n";
 
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    int show_result = usbChecker.showResult();
+    int show_result = usbInfoConfirmer.showResult();
     if(show_result == 0) {
         std::cout << "Udev rules okay. Please check the result the below." << std::endl;
-        std::cout << usbChecker.getLsResult() << std::endl;
+        std::cout << usbInfoConfirmer.getLsResult() << std::endl;
     }
 
     return true;
@@ -258,7 +258,7 @@ bool Manager::deleteMode() {
         return false;
     }
 
-    UsbChecker usbChecker(this->ptrUdevMaker);
+    UsbInfoConfirmer usbInfoConfirmer(this->ptrUdevMaker);
     std::string udev_filename;
 
     bool result = this->ptrUdevMaker->getUdevFilename(&udev_filename, std::stoi(str_input));
