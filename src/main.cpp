@@ -10,13 +10,16 @@
 constexpr const char* VERSION = "2.9.0";
 
 extern "C" {
-    // #include <lua.h>
-    // #include <lualib.h>
-    // #include <lauxlib.h>
-    //// 우분투 case
+#if UBUNTU_20
+    //// 우분투 20 case
     #include <lua5.3/lua.h>
     #include <lua5.3/lualib.h>
     #include <lua5.3/lauxlib.h>
+#else
+    #include <lua.h>
+    #include <lualib.h>
+    #include <lauxlib.h>
+#endif
 }
 
 void helpMsg();
