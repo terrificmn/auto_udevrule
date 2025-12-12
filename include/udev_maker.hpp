@@ -44,7 +44,7 @@ public:
     void makeContent(std::string& udev_str);
     bool copyUdev();
     bool executeUdevadmControl();
-    int makeUdevruleFile();
+    int createUdevruleFile();
     int deleteUdevruleFile(const std::string& input_str);
     bool getUdevFilename(std::string* return_filename, int list_index);
     std::string& getUdevRuleFilename();

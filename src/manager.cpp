@@ -184,7 +184,7 @@ bool Manager::mulipleMode() {
 
 
 
-/// @brief a wrapper function for makeUdevruleFile()
+/// @brief a wrapper function for createUdevruleFile()
 /// @param input_str 
 /// @return 
 int Manager::makeUdevRule(const std::string& input_str) {
@@ -208,7 +208,7 @@ int Manager::makeUdevRule(const std::string& input_str) {
     
 
     // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
-    return this->ptrUdevMaker->makeUdevruleFile();
+    return this->ptrUdevMaker->createUdevruleFile();
 }
 
 bool Manager::inputMode() {

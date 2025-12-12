@@ -303,7 +303,7 @@ bool UdevMaker::executeUdevadmControl() {
     return true;
 }
 
-int UdevMaker::makeUdevruleFile() {
+int UdevMaker::createUdevruleFile() {
     std::cout << "Now.. write begins..\n";
     // std::string helper_writer_path = this->HELPER_WRITER_FULL_PATH;
     std::string cmd;
