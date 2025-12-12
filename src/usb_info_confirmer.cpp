@@ -20,26 +20,27 @@ ResultData UsbInfoConfirmer::findNewDevice(const int& try_count) {
 
     // std::cout << "cmd_str: " << cmd_str << std::endl;
     /// TODO: 최초는 DMESG_SEARCH 이지만, UDEVINFO 찾을 경우에 대해서 업데이트 필요
-    this->getCmdResult(v_result_data, cmd_str, ResultType::LAST_RESULT_ONLY);
+    this->executeCmd(v_result_data, cmd_str, ResultType::LAST_RESULT_ONLY);
 
     // 리턴 받은 값으로 비교 후 마지막 값을 ttyUSB 인지 확인 후 마지막 장치 번호를 리턴해준다.
-    std::cout << "--------------------------------------\n";
-    std::cout << "v_result_data size: " << v_result_data.size() << std::endl;
-    for(auto& result_str : v_result_data) {
-        std::cout << result_str << std::endl;
-    }
-    std::cout << "--------------------------------------\n";
+    // std::cout << "--------------------------------------\n";
+    // std::cout << "v_result_data size: " << v_result_data.size() << std::endl;
+    // for(auto& result_str : v_result_data) {
+    //     std::cout << result_str << std::endl;
+    // }
+    // std::cout << "--------------------------------------\n";
 
 
     if(v_result_data.size() == 0) {
         resultData.result_str = std::string(); //empty
-        std::cout << "No result found.\n";
-    } else {
-        resultData.result_str = std::move(v_result_data.at(0));
+        // std::cout << "No result found. ";
+        return resultData;
     }
 
+    resultData.result_str = std::move(v_result_data.at(0));
+
+    /// usb device 넘버 찾기 - 끝자리만 찾음.
     if(resultData.tty_device == TTYDevice::USB) {
-        /// usb device 넘버 찾기 - 끝자리만 찾음.
         size_t find_index = resultData.result_str.find("ttyUSB");
         if(find_index != std::string::npos) {
             this->m_usb_num_str = resultData.result_str.substr(find_index+6, 1); // extract the last index 
@@ -52,10 +53,19 @@ ResultData UsbInfoConfirmer::findNewDevice(const int& try_count) {
             this->m_usb_num_str = resultData.result_str.substr(find_index+6, 1);
             std::cout << "usb device id: " << this->m_usb_num_str << std::endl;
         }
+    } else {
+        this->m_usb_num_str = "-1";
     }
-    
 
-    return std::move(resultData);
+    /// to assign to found device number
+    try {
+        resultData.found_device_num = stoi(this->m_usb_num_str);
+    } catch (const std::exception& e) {
+        resultData.found_device_num = -1;
+        std::cerr << "Exception error. " << e.what() << std::endl;
+    }
+
+    return resultData;
 }
 
 std::vector<std::string> UsbInfoConfirmer::findUdevInfo(const bool& is_acm_detected) {
@@ -70,51 +80,117 @@ std::vector<std::string> UsbInfoConfirmer::findUdevInfo(const bool& is_acm_detec
         concanated_cmd = this->m_udev_base_cmd + "USB" + usb_id;
     }
 
-    this->getCmdResult(v_udev_result_data, concanated_cmd, ResultType::WHOLE_RESULT);
+    this->executeCmd(v_udev_result_data, concanated_cmd, ResultType::WHOLE_RESULT);
 
     return std::move(v_udev_result_data);
 }
 
-/// 테스트
-// void UsbInfoConfirmer::getCmdResult(std::vector<std::string>& cmd_result_data, const std::string& cmd_str, int process_result_type) {
-//     // FILE *fp;
-//     char var[256];
-//     std::array<char, 128> buffer;
+/// @brief TEST is needed. Not used currently.
+/// @param cmd_str 
+/// @return 
+bool UsbInfoConfirmer::executePopen(const std::string& cmd_str) {
+    char var[256];
+    std::array<char, 128> buffer;
+    std::string result;
 
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd_str.c_str(), "r"), pclose);
+    if(!pipe) {
+        std::cerr << "popen() failed!" << std::endl;
+    }
 
-//     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd_str.c_str(), "r"), pclose);
-//     if(!pipe) {
-//         std::cout << "popen() failed!" << std::endl;
-//     }
-
-//     // fp = popen(cmd_str.c_str(), "r");
-//     while(fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-//         if(process_result_type == ResultType::WHOLE_RESULT) {
-//             // 결과가 많이 필요하므로 UDEVADM 일 경우는 계속 push_back()
-//             // cmd_result_data.push_back(var);
-//             cmd_result_data.push_back(buffer.data());
-//         }
-//     }
-//     //maybe c-style
-//     // while(fgets(var, sizeof(var), fp) != NULL) {
-//     //     // std::cout << var; // 프린트 확인 시
-//     //     if(process_result_type == ResultType::WHOLE_RESULT) {
-//     //         // 결과가 많이 필요하므로 UDEVADM 일 경우는 계속 push_back()
-//     //         cmd_result_data.push_back(var);
-//     //     }
-//     // }
-
-//     /// 처리 후
-//     if(process_result_type == ResultType::LAST_RESULT_ONLY) {
-//         /// DMESG_SEARCH 일 경우에는 마지막 결과만 만들어서 넘김. var has the last result.
-//         // cmd_result_data.push_back(var);
-//         cmd_result_data.push_back(buffer.data());
-//     }
+    while(fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        // cmd_result_data.push_back(var);
+        result = buffer.data();
+    }
     
-//     // pclose(fp);
-// }
+    if(!result.empty()) {
+        std::cout << "ls result: " << result << std::endl;
+        
+    }
+    return true;
+}
 
-void UsbInfoConfirmer::getCmdResult(std::vector<std::string>& cmd_result_data, const std::string& cmd_str, int process_result_type) {
+bool UsbInfoConfirmer::executeSimpleCmd(const std::string& cmd_str) {
+    int outPipe[2]; //stdout
+    int errPipe[2]; //stderr
+    if(pipe(outPipe) == -1) {
+        std::cerr << "stdout pipe error: -1" << std::endl;
+        return false;
+    }
+    if(pipe(errPipe) == -1) {
+        std::cerr << "stderr pipe error: -1" << std::endl;
+        return false;
+    }
+
+    pid_t pid = fork();
+
+    if(pid == -1) {
+        close(outPipe[0]);
+        close(outPipe[1]);
+        close(errPipe[0]);
+        close(errPipe[1]);
+        std::cerr << "pipe error: -1. all closed" << std::endl;
+        return false;
+    }
+    
+    /// child process
+    if(pid == 0) {
+        ///FYI: 2개의 stdout, stderr 를 확인할 수 있게 준비. popen 으로는 stderr를 확인할 수 없음.(아예 불가능한것은 아님)
+        close(outPipe[0]); /// Read close
+        dup2(outPipe[1], STDOUT_FILENO);
+
+        close(errPipe[0]);
+        dup2(errPipe[1], STDERR_FILENO);
+
+        close(outPipe[1]);
+        close(errPipe[1]);
+
+        /// 여기는 sudo가 필요 없어서 괜찮을 듯 함.
+        execl("/bin/sh", "sh", "-c", cmd_str.c_str(), (char*)0);
+
+        // child 종료
+        _exit(1);
+    }
+
+    /// parent process
+    close(outPipe[1]); // write close
+    close(errPipe[1]); // write close
+
+    char buffer[256];
+    bool is_error = false;
+    /// for stdout
+    while(read(outPipe[0], buffer, sizeof(buffer)) > 0) {
+        std::cout << "[stdout]: " << buffer;
+    }
+
+    /// for stderr
+    std::string err_str;
+    while(read(errPipe[0], buffer, sizeof(buffer)) > 0) {
+        std::cout << "[stderr]: " << buffer;
+        err_str = buffer;
+    }
+
+    if(err_str.find("cannot access") != std::string::npos) {
+        // std::cout << "found cannot access\n";
+        is_error = true;
+    }
+
+    close(outPipe[0]);
+    close(errPipe[0]);
+
+    waitpid(pid, nullptr, 0);
+
+    if(is_error) {
+        return false;
+    }
+    return true;
+}
+
+/// @brief execute cmd ; Device has dectected then we can get the device name but It can't be decided at this point if the device is active or not.
+/// @param cmd_result_data 
+/// @param cmd_str 
+/// @param process_result_type 
+void UsbInfoConfirmer::executeCmd(std::vector<std::string>& cmd_result_data, const std::string& cmd_str, int process_result_type) {
     std::cout << "command: " << cmd_str << std::endl;
     int pipefd[2];
     if(pipe(pipefd) == -1) {
@@ -168,15 +244,15 @@ void UsbInfoConfirmer::getCmdResult(std::vector<std::string>& cmd_result_data, c
     std::string result;
 
     while((count = read(pipefd[0], buffer, sizeof(buffer) -1)) > 0) {
-        buffer[count] = '\0'; // add null-terminate
+        buffer[count] = '\0'; // add null-terminate : 한번 읽을 때 바이트 수 만큼 읽어오는데, 마지막 인데스에 null-terminate 를 해줌
         ///TODO: need TEST for WHOLE_RESULT -- 어차피 result 는 만들어야 한다.
-        if(process_result_type == ResultType::WHOLE_RESULT) {
-            // 결과가 많이 필요하므로 UDEVADM 일 경우는 계속 push_back()
-            // cmd_result_data.push_back(buffer);
-            result += buffer;
-        }
+        // if(process_result_type == ResultType::WHOLE_RESULT) {
+        //     // 결과가 많이 필요하므로 UDEVADM 일 경우는 계속 push_back()
+        //     // cmd_result_data.push_back(buffer);
+        //     result += buffer;
+        // }
         result += buffer;
-        std::cout << "-- read once\n";
+        // std::cout << "-- read once\n";
     }
 
     /// Last result count -1 --> error
@@ -184,31 +260,37 @@ void UsbInfoConfirmer::getCmdResult(std::vector<std::string>& cmd_result_data, c
         perror("read");
     }
 
-    std::cout << "result size: " << result.size() << ", result: \n" << result << std::endl;
+    // std::cout << "result size: " << result.size() << ", result: \n" << result << std::endl;
     /// 처리 후
 
     if(!result.empty() && process_result_type == ResultType::LAST_RESULT_ONLY) {
         /// DMESG_SEARCH 일 경우에는 마지막 결과만 만들어서 넘김. var has the last result.
         /// 마지막 읽은 buffer, 256 사이즈를 안넘기면 result와 같은 결과 일 수 있다.
-        
         size_t pos = result.rfind('\n');
         if(pos != std::string::npos) {
-            std::cout << "last \\0 at index: " << pos << std::endl;
-            /// meaning there is '\n' the last of the string
+            /// meaning there is '\n' at the end of the line
         }
 
         std::string last_line;
-        if(pos == result.size() -1) {
-            /// again // exclude literally the last '\n' and re-rfind from there.
+        if(pos == result.size() -1) { /// meaning '\n's pos is at end of the line.
+            // exclude literally the last '\n' and re-rfind from there again.
             size_t re_pos = result.rfind('\n', pos-1);
             if(re_pos != std::string::npos) {
-                std::cout << "before last \\0 at index: " << re_pos << std::endl;
+                std::cout << "the second \\n(reversed) found at : " << re_pos << std::endl;
                 last_line = result.substr(re_pos+1);
                 std::cout << "Last line:\n" << last_line;
-                cmd_result_data.push_back(last_line);
             }
+        } else {
+            std::cout << "last \\0(\\n) at index: " << pos << std::endl;
+            last_line = result.substr(pos+1);
+            std::cout << "Last line:\n" << last_line;
         }
+
+        cmd_result_data.push_back(last_line);
     }
+    // else if(!result.empty() && process_result_type == ResultType::WHOLE_RESULT) {
+    //     //??
+    // }
     
     close(pipefd[0]);
 
@@ -430,7 +512,7 @@ bool UsbInfoConfirmer::detectUsb() {
         resultData = this->findNewDevice(i);
         // std::cout << "return result string: " << resultData.result_str << std::endl;
 
-        /// time check
+        /// 1. time check
         bool detected_time_result = false;
         std::string detected_t_str = this->getDetectedTime(resultData.result_str);
         if(!detected_t_str.empty()) {
@@ -439,21 +521,45 @@ bool UsbInfoConfirmer::detectUsb() {
             /// timeout --> compareDmesgTime
             detected_time_result = timeC.compareDmesgTime(stod(detected_t_str));
         }
-
+        
+        std::string cmd;
         if(i == 0) { // first try
+             /// 2-1, check if the device number exists
+            if(resultData.found_device_num != -1) {
+                std::string cmd = "ls /dev/ttyUSB" + std::to_string(resultData.found_device_num);
+                bool res = this->executeSimpleCmd(cmd);
+                if(!res) {
+                    std::cout << "ttyUSB" << resultData.found_device_num << "not connected." << std::endl;
+                    continue; /// still have one left
+                }
+            }
+
+            /// 2-2. find kernel id
             if(this->getKernelId(resultData.result_str).empty() == false && detected_time_result == true) {
                 std::cout << "Okay. Found the USB device" << std::endl;
                 break;
             } else {
-                std::cout << "Not Found the device." << std::endl;
+                std::cout << "Not Found the device for ttyUSB." << std::endl;
             }
         
         } else if(i == 1) { // second try
-            if(this->getKernelIdForAcm(resultData.result_str).empty() == false && detected_time_result == true) { // the last try
+            /// 3-1, check if the device number exists
+            if(resultData.found_device_num != -1) {
+                std::string cmd = "ls /dev/ttyACM" + std::to_string(resultData.found_device_num);
+                bool res = this->executeSimpleCmd(cmd);
+                if(!res) {
+                    std::cout << "ttyACM" << resultData.found_device_num << " is not connected." << std::endl;
+                    return false;
+                }
+            }
+            /// 3-2. find kernel id
+            // if(this->getKernelIdForAcm(resultData.result_str).empty() == false && detected_time_result == true) { // the last try
+            if(this->getKernelIdForAcm(resultData.result_str).empty() == false) { // the last try
                 std::cout << "Okay. Found the ACM device" << std::endl;
                 is_acm_detected = true;
                 break;
             } else {
+                std::cout << "Not Found the device for ttyACM." << std::endl;
                 std::cout << "USB might be disconnected. Try it again.\n";
                 return false;
             }

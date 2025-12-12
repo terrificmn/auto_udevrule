@@ -17,6 +17,7 @@
 struct ResultData {
     std::string result_str;
     TTYDevice tty_device = TTYDevice::USB;
+    int found_device_num = -1;
 };
 
 class UsbInfoConfirmer {
@@ -26,7 +27,9 @@ public:
     std::vector<std::string> findUdevInfo(const bool& is_acm_detected);
     std::string getUsbId();
 
-    void getCmdResult(std::vector<std::string>& cmd_result_data, const std::string& cmd_str, int process_result_type);
+    void executeCmd(std::vector<std::string>& cmd_result_data, const std::string& cmd_str, int process_result_type);
+    bool executePopen(const std::string& cmd_str);
+    bool executeSimpleCmd(const std::string& cmd_str);
 
     std::string regexWrapper(std::string& last_message, std::string reg_str);
     std::string getDetectedTime(std::string& last_message);
@@ -49,7 +52,7 @@ private:
 
     std::string m_dmesg_base_cmd = "dmesg | grep tty";
     std::string m_udev_base_cmd = "udevadm info /dev/tty";
-    std::string m_usb_num_str = "0";
+    std::string m_usb_num_str = "-1";
     std::string ls_rule_result;
 };
 
