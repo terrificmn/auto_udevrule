@@ -23,6 +23,7 @@ public:
 
 private:
     UdevMaker* ptrUdevMaker = nullptr;
+    UsbInfoConfirmer mUsbInfoConfirmer;
     Mode m_mode;
 
 };

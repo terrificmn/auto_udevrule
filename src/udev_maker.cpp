@@ -630,6 +630,6 @@ void UdevMaker::assignInfoByInput() {
     this->udevInfo.product = std::move(this->un_dev_info["product"]);
 }
 
-UdevInfo UdevMaker::getUdevInfo() {
+UdevInfo& UdevMaker::getUdevInfo() {
     return this->udevInfo;
 }

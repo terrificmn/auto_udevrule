@@ -56,7 +56,7 @@ public:
     bool inputDevInfo();
     void assignInfoByInput();
 
-    UdevInfo getUdevInfo();
+    UdevInfo& getUdevInfo();
 
 private:
     std::string file_path = "./ref";

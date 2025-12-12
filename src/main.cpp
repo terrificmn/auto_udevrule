@@ -7,7 +7,7 @@
 #include "lua_config.hpp"
 #include "sudo_manager.hpp"
 
-constexpr const char* VERSION = "2.9.0";
+constexpr const char* VERSION = "1.1.0";
 
 extern "C" {
 #if UBUNTU_20
@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
     /// lua config setting
     bool open_config_result = LuaConfig::initialze("config.lua");
 
-    /// usb check part
+    /// false for CLI
     UdevMaker udevMaker(false);
     bool open_list_result = udevMaker.initialize();
 
