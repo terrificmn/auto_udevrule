@@ -327,10 +327,8 @@ int Manager::makeUdevRule(const std::string& input_str) {
 }
 
 bool Manager::inputMode() {
-    ///test 
-    ///TODO: 테스트 완료 시 삭제
-    this->inputSymlinkInManualMode();
-    return false;
+    ///FYI: use this in GUI mode only
+    // this->inputSymlinkInManualMode();
 
     std::string str_input = this->inputList("type manually");
     if(str_input.empty()) {
