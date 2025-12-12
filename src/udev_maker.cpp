@@ -304,7 +304,7 @@ bool UdevMaker::executeUdevadmControl() {
 }
 
 int UdevMaker::createUdevruleFile() {
-    std::cout << "Now.. write begins..\n";
+    std::cout << "Now.. writing begins..\n";
     // std::string helper_writer_path = this->HELPER_WRITER_FULL_PATH;
     std::string cmd;
     if(!this->is_policy_kit_needed) {

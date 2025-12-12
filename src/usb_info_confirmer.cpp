@@ -187,11 +187,12 @@ bool UsbInfoConfirmer::executeSimpleCmd(const std::string& cmd_str) {
 }
 
 /// @brief execute cmd ; Device has dectected then we can get the device name but It can't be decided at this point if the device is active or not.
+/// Data can be read line by line or as many as buffer's size on process_result_type
 /// @param cmd_result_data 
 /// @param cmd_str 
 /// @param process_result_type 
 void UsbInfoConfirmer::executeCmd(std::vector<std::string>& cmd_result_data, const std::string& cmd_str, int process_result_type) {
-    std::cout << "command: " << cmd_str << std::endl;
+    // std::cout << "command: " << cmd_str << std::endl;
     int pipefd[2];
     if(pipe(pipefd) == -1) {
         std::cerr << "pipe error: -1" << std::endl;
@@ -238,60 +239,77 @@ void UsbInfoConfirmer::executeCmd(std::vector<std::string>& cmd_result_data, con
     /// for parent process
     close(pipefd[1]); // close write end
     std::cout << "parent processing...\n";
-
-    char buffer[256];
-    ssize_t count;
-    std::string result;
-
-    while((count = read(pipefd[0], buffer, sizeof(buffer) -1)) > 0) {
-        buffer[count] = '\0'; // add null-terminate : 한번 읽을 때 바이트 수 만큼 읽어오는데, 마지막 인데스에 null-terminate 를 해줌
-        ///TODO: need TEST for WHOLE_RESULT -- 어차피 result 는 만들어야 한다.
-        // if(process_result_type == ResultType::WHOLE_RESULT) {
-        //     // 결과가 많이 필요하므로 UDEVADM 일 경우는 계속 push_back()
-        //     // cmd_result_data.push_back(buffer);
-        //     result += buffer;
-        // }
-        result += buffer;
-        // std::cout << "-- read once\n";
-    }
-
-    /// Last result count -1 --> error
-    if(count == -1) {
-        perror("read");
-    }
-
-    // std::cout << "result size: " << result.size() << ", result: \n" << result << std::endl;
-    /// 처리 후
-
-    if(!result.empty() && process_result_type == ResultType::LAST_RESULT_ONLY) {
-        /// DMESG_SEARCH 일 경우에는 마지막 결과만 만들어서 넘김. var has the last result.
-        /// 마지막 읽은 buffer, 256 사이즈를 안넘기면 result와 같은 결과 일 수 있다.
-        size_t pos = result.rfind('\n');
-        if(pos != std::string::npos) {
-            /// meaning there is '\n' at the end of the line
+    if(process_result_type == ResultType::LAST_RESULT_ONLY) {
+        char buffer[256];
+        ssize_t count;
+        std::string result;
+        
+        while((count = read(pipefd[0], buffer, sizeof(buffer) -1)) > 0) {
+            buffer[count] = '\0'; // add null-terminate : 한번 읽을 때 바이트 수 만큼 읽어오는데, 마지막 인데스에 null-terminate 를 해줌
+            result += buffer;
+            // std::cout << "-- read once\n";
+            // std::cout << "--result: " << buffer <<  std::endl;
         }
 
-        std::string last_line;
-        if(pos == result.size() -1) { /// meaning '\n's pos is at end of the line.
-            // exclude literally the last '\n' and re-rfind from there again.
-            size_t re_pos = result.rfind('\n', pos-1);
-            if(re_pos != std::string::npos) {
-                std::cout << "the second \\n(reversed) found at : " << re_pos << std::endl;
-                last_line = result.substr(re_pos+1);
+        /// Last result count -1 --> error
+        if(count == -1) {
+            perror("read");
+        }
+        // std::cout << "result size: " << result.size() << ", result: \n" << result << std::endl;
+
+        if(!result.empty()) {
+            /// DMESG_SEARCH 일 경우에는 마지막 결과만 만들어서 넘김. var has the last result.
+            /// 마지막 읽은 buffer, 256 사이즈를 안넘기면 result와 같은 결과 일 수 있다.
+            size_t pos = result.rfind('\n');
+            if(pos != std::string::npos) {
+                /// meaning there is '\n' at the end of the line
+            }
+
+            std::string last_line;
+            if(pos == result.size() -1) { /// meaning '\n's pos is at end of the line.
+                // exclude literally the last '\n' and re-rfind from there again.
+                size_t re_pos = result.rfind('\n', pos-1);
+                if(re_pos != std::string::npos) {
+                    std::cout << "the second \\n(reversed) found at : " << re_pos << std::endl;
+                    last_line = result.substr(re_pos+1);
+                    std::cout << "Last line:\n" << last_line;
+                }
+            } else {
+                std::cout << "last \\0(\\n) at index: " << pos << std::endl;
+                last_line = result.substr(pos+1);
                 std::cout << "Last line:\n" << last_line;
             }
-        } else {
-            std::cout << "last \\0(\\n) at index: " << pos << std::endl;
-            last_line = result.substr(pos+1);
-            std::cout << "Last line:\n" << last_line;
+
+            cmd_result_data.push_back(last_line);
         }
 
-        cmd_result_data.push_back(last_line);
+    } else if(process_result_type == ResultType::WHOLE_RESULT) {
+        // std::cout << "WHOLE_RESULT: " << result << std::endl;
+        /// 기존 방법은 버퍼 만큼 받아오고 \0이 들어가게 되므로 처리하기 곤란..
+        ///  File descriptor 로 변환에서 사용
+        FILE* stream = fdopen(pipefd[0], "r");
+        if(!stream) {
+            close(pipefd[0]);
+            return;
+        }
+        std::vector<std::string> lines;
+        char line_buff[1024];
+
+        /// fgets read line by line
+        while(fgets(line_buff, sizeof(line_buff), stream) != nullptr) {
+            std::string line(line_buff);
+            // remove trailing newline if present
+            if(!line.empty() && line.back() == '\n') {
+                line.pop_back();
+            }
+
+            lines.push_back(line);
+        }
+        fclose(stream);
+
+        cmd_result_data = std::move(lines);
     }
-    // else if(!result.empty() && process_result_type == ResultType::WHOLE_RESULT) {
-    //     //??
-    // }
-    
+ 
     close(pipefd[0]);
 
     /// wait for child
