@@ -43,9 +43,8 @@ public:
     std::string getIdsAterRegex(std::string& last_message);
     bool checkNumber(std::string& input_msg);
     
-    int showResult();
+    int showResult(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
     std::string getLsResult();
-    bool detectUsb();
 
 private:
     UdevMaker* ptrUdevMaker = nullptr;

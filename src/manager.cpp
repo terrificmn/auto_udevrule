@@ -62,24 +62,27 @@ bool Manager::singleMode() {
     }
     
     /// detect usb device
-    bool res = this->mUsbInfoConfirmer.detectUsb();
+    bool res = this->detectUsb();
     if(!res) {
         std::cerr << "error\n";
         return false;
     }
 
     /// for the result
-    UdevInfo& udevInfo = this->ptrUdevMaker->getUdevInfo();
+    if(!this->ttyUdevInfo) {
+        std::cerr << "No shared TtyUdevInfo found." << std::endl;
+        return false;
+    }
     std::cout << "\n/// udevInfo ///\n";
-    std::cout << "\tkernel: " << udevInfo.kernel << std::endl;
-    std::cout << "\tproduct: " << udevInfo.product << std::endl;
-    std::cout << "\tvendor: " << udevInfo.vendor << std::endl;
-    std::cout << "\tserial: " << udevInfo.serial << std::endl;
+    std::cout << "\tkernel: " << this->ttyUdevInfo->kernel << std::endl;
+    std::cout << "\tproduct: " << this->ttyUdevInfo->product << std::endl;
+    std::cout << "\tvendor: " << this->ttyUdevInfo->vendor << std::endl;
+    std::cout << "\tserial: " << this->ttyUdevInfo->serial << std::endl;
     ///FYI: symlink can be assigned after makeUdevRule() is called.
     std::cout << "\tsymlink_name: Not decided yet" <<  /* udevInfo.symlink_name  << */ std::endl;
-
+    
     ///FYI: for warning
-    if(this->ptrUdevMaker->getSerialWarn()) {
+    if(this->ptrUdevMaker->getSerialWarn(this->ttyUdevInfo) ) {
         std::cerr << "[warn]serial info not found. Please change 'use_serial' to false in the config.lua" << std::endl;
         std::cerr << "[warn]device may not be found." << std::endl;
     }
@@ -94,7 +97,7 @@ bool Manager::singleMode() {
     std::cout << "\n== Copy complete!! ==\n\n";
 
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    int show_result = this->mUsbInfoConfirmer.showResult();
+    int show_result = this->mUsbInfoConfirmer.showResult(this->ttyUdevInfo);
     if(show_result == 0) {
         std::cout << "Udev rules okay. Please check the result the below." << std::endl;
         std::cout << this->mUsbInfoConfirmer.getLsResult() << std::endl;
@@ -183,16 +186,132 @@ bool Manager::mulipleMode() {
 }
 
 
+bool Manager::detectUsb() {
+    ResultData resultData;
+    bool is_acm_detected = false; //default
+
+    /// step 1. find new device - USB, ACM
+    for(int i=0; i<2; i++) {
+        resultData = this->mUsbInfoConfirmer.findNewDevice(i);
+        // std::cout << "return result string: " << resultData.result_str << std::endl;
+
+        /// 1. time check
+        bool detected_time_result = false;
+        std::string detected_t_str = this->mUsbInfoConfirmer.getDetectedTime(resultData.result_str);
+        if(!detected_t_str.empty()) {
+            TimeChecker timeC;
+            timeC.dmesgToRealTime(stod(detected_t_str));
+            /// timeout --> compareDmesgTime
+            detected_time_result = timeC.compareDmesgTime(stod(detected_t_str));
+        }
+        
+        std::string cmd;
+        if(i == 0) { // first try
+             /// 2-1, check if the device number exists
+            if(resultData.found_device_num != -1) {
+                std::string cmd = "ls /dev/ttyUSB" + std::to_string(resultData.found_device_num);
+                bool res = this->mUsbInfoConfirmer.executeSimpleCmd(cmd);
+                if(!res) {
+                    std::cout << "ttyUSB" << resultData.found_device_num << "not connected." << std::endl;
+                    continue; /// still have one left
+                }
+            }
+
+            /// 2-2. find kernel id
+            if(this->mUsbInfoConfirmer.getKernelId(resultData.result_str).empty() == false && detected_time_result == true) {
+                std::cout << "Okay. Found the USB device" << std::endl;
+                break;
+            } else {
+                std::cout << "Not Found the device for ttyUSB." << std::endl;
+            }
+        
+        } else if(i == 1) { // second try
+            /// 3-1, check if the device number exists
+            if(resultData.found_device_num != -1) {
+                std::string cmd = "ls /dev/ttyACM" + std::to_string(resultData.found_device_num);
+                bool res = this->mUsbInfoConfirmer.executeSimpleCmd(cmd);
+                if(!res) {
+                    std::cout << "ttyACM" << resultData.found_device_num << " is not connected." << std::endl;
+                    return false;
+                }
+            }
+            /// 3-2. find kernel id
+            // if(this->getKernelIdForAcm(resultData.result_str).empty() == false && detected_time_result == true) { // the last try
+            if(this->mUsbInfoConfirmer.getKernelIdForAcm(resultData.result_str).empty() == false) { // the last try
+                std::cout << "Okay. Found the ACM device" << std::endl;
+                is_acm_detected = true;
+                break;
+            } else {
+                std::cout << "Not Found the device for ttyACM." << std::endl;
+                std::cout << "USB might be disconnected. Try it again.\n";
+                return false;
+            }
+        }
+        std::cout << std::endl;
+    } // for loop end
+    
+
+    this->ttyUdevInfo = std::make_shared<TtyUdevInfo>();
+
+    /// step2. get Kenrnel id if it's found.  --> a bit different method to find the kernel id between usb and acm
+    if(is_acm_detected) {
+        // std::cout << "ACM device detected!" << std::endl;    
+        ttyUdevInfo->kernel = this->mUsbInfoConfirmer.getKernelIdForAcm(resultData.result_str);
+    
+    } else {
+        ttyUdevInfo->kernel = this->mUsbInfoConfirmer.getKernelId(resultData.result_str);
+    }
+
+    std::cout << "usb id: " << this->mUsbInfoConfirmer.getUsbId() << std::endl;
+    std::cout << "kernel id: " << ttyUdevInfo->kernel << std::endl;
+
+    /// step3. get vender_id, model_id, and serial_id
+    std::vector<std::string> v_udev_str;
+    v_udev_str = this->mUsbInfoConfirmer.findUdevInfo(is_acm_detected);
+
+    std::string res_vender_id, res_model_id, res_serial_id;
+    for(int i=0; i< v_udev_str.size(); ++i) {
+        // res_vender_id = UsbInfoConfirmer.getVenderId(v_udev_str[i]);
+        if(this->mUsbInfoConfirmer.getVenderId(v_udev_str[i]).empty() == false) {
+            res_vender_id = v_udev_str[i];
+        } 
+        if(this->mUsbInfoConfirmer.getModelId(v_udev_str[i]).empty() == false) {
+            res_model_id = v_udev_str[i];
+        }
+        if(this->mUsbInfoConfirmer.getSerialId(v_udev_str[i]).empty() == false) {
+            res_serial_id = v_udev_str[i];
+        }
+        /// loop until all strings are found.
+        if(!res_vender_id.empty() && !res_model_id.empty() && !res_serial_id.empty()) {
+            // std::cout << "break!" << std::endl;
+            break;
+        }
+    }
+
+    // std::cout << "vendor_id : " << res_vender_id << std::endl;
+    // std::cout << "model_id : " << res_model_id << std::endl;
+    // std::cout << "serial_id : " << res_serial_id << std::endl;
+
+    /// step4. save value
+    this->ttyUdevInfo->vendor = this->mUsbInfoConfirmer.getIdsAterRegex(res_vender_id);
+    this->ttyUdevInfo->product = this->mUsbInfoConfirmer.getIdsAterRegex(res_model_id);
+    this->ttyUdevInfo->serial = this->mUsbInfoConfirmer.getIdsAterRegex(res_serial_id);
+    std::cout << "extracted vendor_id : " << this->ttyUdevInfo->vendor  << std::endl;
+    std::cout << "extracted model_id : " << this->ttyUdevInfo->product  << std::endl;
+    std::cout << "extracted serial_id : " << this->ttyUdevInfo->serial << std::endl;
+
+    return true;
+}
 
 /// @brief a wrapper function for createUdevruleFile()
 /// @param input_str 
 /// @return 
 int Manager::makeUdevRule(const std::string& input_str) {
     // detection 이후 
-    this->ptrUdevMaker->setSymlink(std::stoi(input_str));
+    this->ptrUdevMaker->setSymlink(std::stoi(input_str), this->ttyUdevInfo);
 
     if(this->ptrUdevMaker->getIsPolicyKitNeeded()) {   
-        int res = this->ptrUdevMaker->createUdevRuleFileWithFork();
+        int res = this->ptrUdevMaker->createUdevRuleFileWithFork(this->ttyUdevInfo);
         if(res == 0) {
             std::vector<std::string> cmd_result_data;
             std::string cmd = "udevadm control --reload-rules; udevadm trigger";
@@ -203,7 +322,7 @@ int Manager::makeUdevRule(const std::string& input_str) {
 
     } else {
         // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
-        return this->ptrUdevMaker->createUdevRuleFile();
+        return this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
     }
 }
 
@@ -218,11 +337,13 @@ bool Manager::inputMode() {
         return false;
     }
 
+    if(!this->ttyUdevInfo) {
+        this->ttyUdevInfo = std::make_shared<TtyUdevInfo>();
+    }
     std::cout << "::input_mode::" << std::endl;
-    bool res = this->ptrUdevMaker->inputDevInfo();
+    bool res = this->ptrUdevMaker->inputDevInfo(this->ttyUdevInfo);
     if(res) {
-        std::cout << "input OK!\n";
-        this->ptrUdevMaker->assignInfoByInput();  // instead of detectUsb()
+        std::cout << "input OK!\n";\
     } else {
         std::cout << "aborted by user\n";
         return false;
@@ -243,7 +364,7 @@ void Manager::inputSymlinkInManualMode() {
     std::cin >> user_input;
     // std::cout << "you enter: " << user_input << std::endl;
 
-    this->ptrUdevMaker->setSymlinkNameByType(user_input);
+    this->ptrUdevMaker->setSymlinkNameByType(user_input, this->ttyUdevInfo);
 }
 
 bool Manager::deleteMode() {
@@ -253,16 +374,27 @@ bool Manager::deleteMode() {
     }
 
     std::string udev_filename;
-    bool result = this->ptrUdevMaker->getUdevFilename(&udev_filename, std::stoi(str_input));
+    int input_num;
+    try {
+        input_num = std::stoi(str_input);
+
+    } catch(const std::exception& e) {
+        std::cerr << "Exception error: " << e.what() << std::endl;
+        return false;
+    }
+    bool result = this->ptrUdevMaker->getUdevFilename(&udev_filename, input_num);
     if(!result) {
         std::cerr << "Can't get the udev filename." << std::endl;
         return false;
     }
-
+    if(!this->ttyUdevInfo) {
+        this->ttyUdevInfo = std::make_shared<TtyUdevInfo>();
+    }
     // std::cout << "Now trying to remove is " << udev_filename << std::endl;
+    this->ptrUdevMaker->setSymlink(input_num, this->ttyUdevInfo);
 
     // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
-    int fin_result = this->ptrUdevMaker->deleteUdevruleFile(str_input);
+    int fin_result = this->ptrUdevMaker->deleteUdevruleFile();
 
     if(fin_result != 0) {
         std::cerr << "\n== Failed to delete the udev rule. ==\n\n";

@@ -491,12 +491,15 @@ bool UsbInfoConfirmer::checkNumber(std::string& input_msg) {
     return true;
 }
 
-int UsbInfoConfirmer::showResult() {
+int UsbInfoConfirmer::showResult(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info) {
+    if(!shared_tty_udev_info) {
+        return 1;
+    }
     ///DEBUG
-    std::cout << "symlink name " << this->ptrUdevMaker->udevInfo.symlink_name << std::endl;
+    std::cout << "symlink name " << shared_tty_udev_info->symlink_name << std::endl;
     // std::cout << "rule file name: " << this->ptrUdevMaker->getUdevRuleFilename() << std::endl;
 
-    std::string cmd = "ls -l /dev/" + this->ptrUdevMaker->udevInfo.symlink_name;
+    std::string cmd = "ls -l /dev/" + shared_tty_udev_info->symlink_name;
     // std::cout << "symlink cmd: " << cmd << std::endl;
 
     FILE *fp;
@@ -521,7 +524,7 @@ int UsbInfoConfirmer::showResult() {
             int exit_code = WEXITSTATUS(result);
             if (exit_code == 0) {
                 /// set 
-                this->ls_rule_result = std::move(show_str);
+                this->ls_rule_result = show_str;
             } else {
                 std::cerr << "The final result exited with error code: " << exit_code << std::endl;
                 ///FYI: exit_code Non-zero (1-255)
@@ -538,120 +541,4 @@ int UsbInfoConfirmer::showResult() {
 
 std::string UsbInfoConfirmer::getLsResult() {
     return this->ls_rule_result;
-}
-
-bool UsbInfoConfirmer::detectUsb() {
-    ResultData resultData;
-    bool is_acm_detected = false; //default
-
-    /// step 1. find new device - USB, ACM
-    for(int i=0; i<2; i++) {
-        resultData = this->findNewDevice(i);
-        // std::cout << "return result string: " << resultData.result_str << std::endl;
-
-        /// 1. time check
-        bool detected_time_result = false;
-        std::string detected_t_str = this->getDetectedTime(resultData.result_str);
-        if(!detected_t_str.empty()) {
-            TimeChecker timeC;
-            timeC.dmesgToRealTime(stod(detected_t_str));
-            /// timeout --> compareDmesgTime
-            detected_time_result = timeC.compareDmesgTime(stod(detected_t_str));
-        }
-        
-        std::string cmd;
-        if(i == 0) { // first try
-             /// 2-1, check if the device number exists
-            if(resultData.found_device_num != -1) {
-                std::string cmd = "ls /dev/ttyUSB" + std::to_string(resultData.found_device_num);
-                bool res = this->executeSimpleCmd(cmd);
-                if(!res) {
-                    std::cout << "ttyUSB" << resultData.found_device_num << "not connected." << std::endl;
-                    continue; /// still have one left
-                }
-            }
-
-            /// 2-2. find kernel id
-            if(this->getKernelId(resultData.result_str).empty() == false && detected_time_result == true) {
-                std::cout << "Okay. Found the USB device" << std::endl;
-                break;
-            } else {
-                std::cout << "Not Found the device for ttyUSB." << std::endl;
-            }
-        
-        } else if(i == 1) { // second try
-            /// 3-1, check if the device number exists
-            if(resultData.found_device_num != -1) {
-                std::string cmd = "ls /dev/ttyACM" + std::to_string(resultData.found_device_num);
-                bool res = this->executeSimpleCmd(cmd);
-                if(!res) {
-                    std::cout << "ttyACM" << resultData.found_device_num << " is not connected." << std::endl;
-                    return false;
-                }
-            }
-            /// 3-2. find kernel id
-            // if(this->getKernelIdForAcm(resultData.result_str).empty() == false && detected_time_result == true) { // the last try
-            if(this->getKernelIdForAcm(resultData.result_str).empty() == false) { // the last try
-                std::cout << "Okay. Found the ACM device" << std::endl;
-                is_acm_detected = true;
-                break;
-            } else {
-                std::cout << "Not Found the device for ttyACM." << std::endl;
-                std::cout << "USB might be disconnected. Try it again.\n";
-                return false;
-            }
-        }
-        std::cout << std::endl;
-    } // for loop end
-    
-    /// step2. get Kenrnel id if it's found.  --> a bit different method to find the kernel id between usb and acm
-    if(is_acm_detected) {
-        // std::cout << "ACM device detected!" << std::endl;    
-        ptrUdevMaker->udevInfo.kernel = this->getKernelIdForAcm(resultData.result_str);
-    
-    } else {
-        ptrUdevMaker->udevInfo.kernel = this->getKernelId(resultData.result_str);
-    }
-
-    // std::cout << std::endl;
-    // std::cout << "kernel id: " << ptrUdevMaker->udevInfo.kernel << std::endl;
-    // std::cout << "usb id: " <<  this->getUsbId() << std::endl;
-
-    /// step3. get vender_id, model_id, and serial_id
-    std::vector<std::string> v_udev_str;
-    v_udev_str = this->findUdevInfo(is_acm_detected);
-
-    std::string res_vender_id, res_model_id, res_serial_id;
-    for(int i=0; i< v_udev_str.size(); ++i) {
-        // res_vender_id = UsbInfoConfirmer.getVenderId(v_udev_str[i]);
-        if(this->getVenderId(v_udev_str[i]).empty() == false) {
-            res_vender_id = v_udev_str[i];
-        } 
-        if(this->getModelId(v_udev_str[i]).empty() == false) {
-            res_model_id = v_udev_str[i];
-        }
-        if(this->getSerialId(v_udev_str[i]).empty() == false) {
-            res_serial_id = v_udev_str[i];
-        }
-        /// loop until all strings are found.
-        if(!res_vender_id.empty() && !res_model_id.empty() && !res_serial_id.empty()) {
-            // std::cout << "break!" << std::endl;
-            break;
-        }
-    }
-
-    // std::cout << "vendor_id : " << res_vender_id << std::endl;
-    // std::cout << "model_id : " << res_model_id << std::endl;
-    // std::cout << "serial_id : " << res_serial_id << std::endl;
-
-    /// step4. save value
-    ptrUdevMaker->udevInfo.vendor = this->getIdsAterRegex(res_vender_id);
-    ptrUdevMaker->udevInfo.product = this->getIdsAterRegex(res_model_id);
-    ptrUdevMaker->udevInfo.serial = this->getIdsAterRegex(res_serial_id);
-
-    // std::cout << "extracted vendor_id : " << ptrUdevMaker->udevInfo.vendor << std::endl;
-    // std::cout << "extracted model_id : " << ptrUdevMaker->udevInfo.product  << std::endl;
-    // std::cout << "extracted serial_id : " << ptrUdevMaker->udevInfo.serial << std::endl;
-
-    return true;
 }

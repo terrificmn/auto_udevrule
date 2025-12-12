@@ -65,7 +65,10 @@ bool UdevMaker::getIsPolicyKitNeeded() {
 /// @brief set symlink_name and udev_filename as well by user input (v_list_index)
 /// @param v_list_index 
 /// @return 
-bool UdevMaker::setSymlink(int v_list_index) {
+bool UdevMaker::setSymlink(int v_list_index, std::shared_ptr<TtyUdevInfo> shared_tty_udev_info) {
+    if(!shared_tty_udev_info) {
+        return false;
+    }
     // std::cout << "set symlink ...\n";
 
     // 넘버 자체를 +1 해서 받으므로 사이즈 만큼은 받는다. (0일 때 -1 되는 것 방지)
@@ -75,7 +78,7 @@ bool UdevMaker::setSymlink(int v_list_index) {
     }
 
     // v_list_index 는 처음에 인덱스에 +1 를 해줬으므로 다시 -1 해준다.
-    this->udevInfo.symlink_name = this->v_symlink_list.at(v_list_index -1);
+    shared_tty_udev_info->symlink_name = this->v_symlink_list.at(v_list_index -1);
     // this->udev_filename = "90-" + this->v_device_list[v_list_index -1] + this->symlink_suffix;
     this->udev_filename = prefix_udevrule_number + "-" + this->v_device_list[v_list_index -1] + this->symlink_suffix;
     /// ex: 90-esp-rules (completed filename)
@@ -88,9 +91,13 @@ bool UdevMaker::setSymlink(int v_list_index) {
 
 /// @brief set symlink name and symlink filename by user's input instead of using a list file under ref
 /// @param user_input 
-void UdevMaker::setSymlinkNameByType(const std::string& user_input) {
+void UdevMaker::setSymlinkNameByType(const std::string& user_input, std::shared_ptr<TtyUdevInfo> shared_tty_udev_info) {
     if(user_input.empty()) {
         std::cerr << "empty string is not allowed." << std::endl;
+        return;
+    }
+    if(!shared_tty_udev_info) {
+        std::cerr << "shared_tty_udev_info is not valid." << std::endl;
         return;
     }
 
@@ -101,8 +108,8 @@ void UdevMaker::setSymlinkNameByType(const std::string& user_input) {
     std::cout << "temp_str: " << temp_str << std::endl;
 
     /// TODO: may need a function that converts the Camel case for user input
-    this->udevInfo.symlink_name = "tty" + user_input;
-    std::cout << "Now udevInfo symlink_name: " << this->udevInfo.symlink_name << std::endl;
+    shared_tty_udev_info->symlink_name = "tty" + user_input;
+    std::cout << "Now udevInfo symlink_name: " << shared_tty_udev_info->symlink_name << std::endl;
 
     this->udev_filename = prefix_udevrule_number + "-" + temp_str + this->symlink_suffix;
     /// ex: 90-esp-rules (completed filename)
@@ -227,30 +234,40 @@ std::vector<std::string> UdevMaker::getDeviceList() {
 void UdevMaker::makeScript(std::fstream* fs) {
     std::string str;
 
-    this->makeContent(str);
+    // this->makeContent(str);
     
     *fs << str;
 }
 
-bool UdevMaker::getSerialWarn() {
-    if(LuaConfig::use_serial == true && this->udevInfo.serial.empty() && !this->udevInfo.kernel.empty()) {
+bool UdevMaker::getSerialWarn(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info) {
+    std::cout << "inside getSerialWarn()" << std::endl;
+    std::cout << "current use count :" << shared_tty_udev_info.use_count() << std::endl;
+    if(!shared_tty_udev_info) {
+        return false;
+    }
+    if(LuaConfig::use_serial == true && shared_tty_udev_info->serial.empty() && !shared_tty_udev_info->kernel.empty()) {
         return true;
     }
     return false;
 }
 
-void UdevMaker::makeContent(std::string& udev_str) {
+void UdevMaker::makeContent(std::string& udev_str, std::shared_ptr<TtyUdevInfo> shared_tty_udev_info) {
+    if(!shared_tty_udev_info) {
+        std::cerr << "shared_tty_udev_info is not valid." << std::endl;
+        return;
+    }
+
     /// static LuaConfig's variable already set.
     if(LuaConfig::use_kernel) {
-        udev_str = "SUBSYSTEM==\"tty\", KERNELS==\"" + this->udevInfo.kernel + "\", ATTRS{idVendor}==\"" + this->udevInfo.vendor + "\", ";
+        udev_str = "SUBSYSTEM==\"tty\", KERNELS==\"" + shared_tty_udev_info->kernel + "\", ATTRS{idVendor}==\"" + shared_tty_udev_info->vendor + "\", ";
     } else {
-        udev_str = "SUBSYSTEM==\"tty\", ATTRS{idVendor}==\"" + this->udevInfo.vendor + "\", ";
+        udev_str = "SUBSYSTEM==\"tty\", ATTRS{idVendor}==\"" + shared_tty_udev_info->vendor + "\", ";
     }
 
     if(LuaConfig::use_serial) {
-        udev_str.append("ATTRS{serial}==\"" +  this->udevInfo.serial  + "\", ");
+        udev_str.append("ATTRS{serial}==\"" +  shared_tty_udev_info->serial  + "\", ");
     }
-    udev_str.append("ATTRS{idProduct}==\"" + this->udevInfo.product + "\", MODE:=\"0666\", GROUP:=\"dialout\", SYMLINK+=\"" + this->udevInfo.symlink_name + "\"");
+    udev_str.append("ATTRS{idProduct}==\"" + shared_tty_udev_info->product + "\", MODE:=\"0666\", GROUP:=\"dialout\", SYMLINK+=\"" + shared_tty_udev_info->symlink_name + "\"");
     
     ///DEBUG
     std::cout << "\nscript's content:\n";
@@ -303,7 +320,11 @@ bool UdevMaker::executeUdevadmControl() {
     return true;
 }
 
-int UdevMaker::createUdevRuleFile() {
+int UdevMaker::createUdevRuleFile(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info) {
+    if(!shared_tty_udev_info) {
+
+        return -1;
+    }
     std::cout << "Now.. writing begins..\n";
     // std::string helper_writer_path = this->HELPER_WRITER_FULL_PATH;
     std::string cmd = "sudo " + this->HELPER_WRITER_FULL_PATH;
@@ -345,7 +366,7 @@ int UdevMaker::createUdevRuleFile() {
     /// 4.
     // send the actual content
     std::string udev_content;
-    this->makeContent(udev_content);
+    this->makeContent(udev_content, shared_tty_udev_info);
 
     if(fprintf(pipeFile, "%s", udev_content.c_str()) < 0) {
         perror("Failed to write content to Helper Writer's stdin");
@@ -383,7 +404,7 @@ int UdevMaker::createUdevRuleFile() {
     return 0; // finally!
 }
 
-int UdevMaker::createUdevRuleFileWithFork() {
+int UdevMaker::createUdevRuleFileWithFork(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info) {
     SubProcessWriter subProcessWriter;
 
     /// process 
@@ -414,7 +435,7 @@ int UdevMaker::createUdevRuleFileWithFork() {
 
     /// 4. send the actual content
     std::string udev_content;
-    this->makeContent(udev_content);
+    this->makeContent(udev_content, shared_tty_udev_info);
 
     if(!subProcessWriter.writeContent(udev_content)) {
         std::cerr << "Failed to write content to Helper Writer's stdin" << std::endl;
@@ -425,9 +446,7 @@ int UdevMaker::createUdevRuleFileWithFork() {
 }
 
 
-int UdevMaker::deleteUdevruleFile(const std::string& input_str) {
-    this->setSymlink(std::stoi(input_str));
-
+int UdevMaker::deleteUdevruleFile() {
     std::cout << "Now.. delete begins..\n";
     ///FYI: use the helper_writer with sudo for the security 
     std::string cmd;
@@ -632,20 +651,21 @@ void UdevMaker::createConfigLua() {
 /// @brief get user's input (kernel, vendor & product) step by step.
 /// save data to un_dev_info (unordered_map<string>)
 /// @return 
-bool UdevMaker::inputDevInfo() {
+bool UdevMaker::inputDevInfo(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info) {
+    // instead of detectUsb()
     std::cout << "Please insert the data..\n";
     std::cout << "kernel (eg. 1-1): ";
-    std::cin >> this->un_dev_info["kernel"];
+    std::cin >> shared_tty_udev_info->kernel;
     
     std::cout << "vendor id (eg. 10c4): ";
-    std::cin >> this->un_dev_info["vendor"];
+    std::cin >> shared_tty_udev_info->vendor;
     
     std::cout << "product id (eg. ea60): ";
-    std::cin >> this->un_dev_info["product"];
+    std::cin >> shared_tty_udev_info->product;
 
-    std::cout << "input kernel : " << this->un_dev_info["kernel"] << std::endl;
-    std::cout << "input vendor : " << this->un_dev_info["vendor"] << std::endl;
-    std::cout << "input product : " << this->un_dev_info["product"] << std::endl;
+    std::cout << "input kernel : " << shared_tty_udev_info->kernel << std::endl;
+    std::cout << "input vendor : " << shared_tty_udev_info->vendor << std::endl;
+    std::cout << "input product : " << shared_tty_udev_info->product << std::endl;
     
     std::cout << "Are these correct? (y / n) ?";
     std::string fin_input;
@@ -655,16 +675,6 @@ bool UdevMaker::inputDevInfo() {
         return true;
     }
 
+    shared_tty_udev_info.reset();
     return false;
-}
-
-/// @brief assign udevMaker's variable. It is used instead of using UsbChecker::detectUSB() when INPUT mode
-void UdevMaker::assignInfoByInput() {
-    this->udevInfo.kernel = std::move(this->un_dev_info["kernel"]);
-    this->udevInfo.vendor = std::move(this->un_dev_info["vendor"]);
-    this->udevInfo.product = std::move(this->un_dev_info["product"]);
-}
-
-UdevInfo& UdevMaker::getUdevInfo() {
-    return this->udevInfo;
 }

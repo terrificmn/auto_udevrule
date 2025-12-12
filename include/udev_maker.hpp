@@ -6,21 +6,13 @@
 #include <fstream>
 #include <vector>
 #include <filesystem>  // c++17
-#include <unordered_map>
 #include <cstdio>  // popen
 #include "lua_config.hpp"
 #include "sub_process_writer.hpp"
+#include "device_enum.hpp"
 
 enum Type {
     READ, WRITE, DELETE
-};
-
-struct UdevInfo {
-    std::string kernel;
-    std::string vendor; 
-    std::string product;
-    std::string serial;
-    std::string symlink_name;
 };
 
 class UdevMaker {
@@ -30,10 +22,9 @@ public:
 
     bool initialize();
     bool getIsPolicyKitNeeded();
-    UdevInfo udevInfo;
     std::string m_dir_file_name, m_filename;
-    bool setSymlink(int v_list_index);
-    void setSymlinkNameByType(const std::string& user_input);
+    bool setSymlink(int v_list_index, std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
+    void setSymlinkNameByType(const std::string& user_input, std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
     std::string makeSymlinkFilename(const std::string& user_input_str);
     std::string veritySymlinkName(const std::string& user_input_str);
     bool openFile(std::fstream* fs, std::string filename, Type type_enum);
@@ -41,13 +32,13 @@ public:
     void printList();
     std::vector<std::string> getDeviceList();
     void makeScript(std::fstream* fs);
-    bool getSerialWarn();
-    void makeContent(std::string& udev_str);
+    bool getSerialWarn(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
+    void makeContent(std::string& udev_str, std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
     bool copyUdev();
     bool executeUdevadmControl();
-    int createUdevRuleFile();
-    int createUdevRuleFileWithFork();
-    int deleteUdevruleFile(const std::string& input_str);
+    int createUdevRuleFile(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
+    int createUdevRuleFileWithFork(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
+    int deleteUdevruleFile();
     bool getUdevFilename(std::string* return_filename, int list_index);
     std::string& getUdevRuleFilename();
     int getVSize();
@@ -55,10 +46,7 @@ public:
     void createBasicList(std::string list_full_path="");
     bool copyHelper(const std::string& helper_path);
     void createConfigLua();
-    bool inputDevInfo();
-    void assignInfoByInput();
-
-    UdevInfo& getUdevInfo();
+    bool inputDevInfo(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
 
 private:
     std::string file_path = "./ref";
@@ -66,7 +54,6 @@ private:
     std::string symlink_prefix = "tty";
     std::string symlink_suffix = ".rules";
     std::string prefix_udevrule_number = "90";
-    std::unordered_map<std::string, std::string> un_dev_info;
     const char* HELPER_WRITER_FILENAME = "helper_writer";
     std::string HELPER_WRITER_FULL_PATH;
     // std::string symlink_name

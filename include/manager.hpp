@@ -1,10 +1,11 @@
 #ifndef MANAGER_HPP
 #define MANAGER_HPP
 
+#include <thread>
+#include <memory>
 #include "device_enum.hpp"
 #include "udev_maker.hpp"
 #include "usb_info_confirmer.hpp"
-#include <thread>
 
 class Manager {
 public:
@@ -14,12 +15,15 @@ public:
     std::string inputList(const std::string& str_print);
     bool singleMode();
     bool mulipleMode();
+    bool detectUsb();
     int makeUdevRule(const std::string& input_str);
     
     bool inputMode();
     void inputSymlinkInManualMode();
     bool deleteMode();
     
+public:
+    std::shared_ptr<TtyUdevInfo> ttyUdevInfo;
 
 private:
     UdevMaker* ptrUdevMaker = nullptr;
