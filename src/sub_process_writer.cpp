@@ -98,20 +98,20 @@ bool SubProcessWriter::writeContent(const std::string& data) {
 }
 
 int SubProcessWriter::finishProcess() {
-    ///FYI: startProcess() 에서 writePipeFd 에 pipefd[1] 
+    ///FYI: startProcess() 에서 writePipeFd 에 pipefd[1]  // close pipe
     if(this->writePipeFd != -1) {
         close(this->writePipeFd);
         this->writePipeFd = -1; ///reset
     }
 
-    /// If m_pid(child) is already reset, then return
-    if(this->m_pid == -1) {
-        return -1;
+    /// If m_pid(child) is already reset, then early return
+    if(this->finished || this->m_pid == -1) {
+        return 0;
     }
 
     /// wait for child
     int status;
-    waitpid(this->m_pid, &status, 0);
+    waitpid(this->m_pid, &status, 0);  /// block and wait
 
     std::string verb;
     /// defaule
@@ -130,9 +130,13 @@ int SubProcessWriter::finishProcess() {
             std::cerr << "Check Helper Writer's stderr output (if any was printed to the same terminal)." << std::endl;
             ///FYI: Non-zero (1-255)
         }
+        this->finished = true;
+        this->m_pid = -1;
         return exit_code;
     } else {
         std::cerr << "Helper Writer process did not terminate normally (e.g., killed by a signal)." << std::endl;
+        this->finished = true;
+        this->m_pid = -1;
         return -6;
     }
 }

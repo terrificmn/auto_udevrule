@@ -21,6 +21,7 @@ private:
     pid_t m_pid;
     bool is_gui_mode = true;
     bool is_write_mode;
+    bool finished = false;
 
 };
 
