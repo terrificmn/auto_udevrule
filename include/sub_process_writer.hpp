@@ -8,7 +8,7 @@
 
 class SubProcessWriter {
 public:
-    SubProcessWriter();
+    SubProcessWriter(bool write_mode=true);
     ~SubProcessWriter();
 
     bool startProcess(const std::string& sub_prog_path);
@@ -20,6 +20,7 @@ private:
     int writePipeFd; // file descriptor 
     pid_t m_pid;
     bool is_gui_mode = true;
+    bool is_write_mode;
 
 };
 

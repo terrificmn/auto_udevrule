@@ -21,6 +21,7 @@ public:
     bool inputMode();
     void inputSymlinkInManualMode();
     bool deleteMode();
+    int removeUdevRule(int input_num);
     
 public:
     std::shared_ptr<TtyUdevInfo> ttyUdevInfo;

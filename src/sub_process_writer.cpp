@@ -1,6 +1,6 @@
 #include "sub_process_writer.hpp"
 
-SubProcessWriter::SubProcessWriter() : writePipeFd(-1), m_pid(-1) {
+SubProcessWriter::SubProcessWriter(bool write_mode) : writePipeFd(-1), m_pid(-1), is_write_mode(write_mode) {
     ///currently only for GUI mode
 }
 SubProcessWriter::~SubProcessWriter() {
@@ -113,11 +113,18 @@ int SubProcessWriter::finishProcess() {
     int status;
     waitpid(this->m_pid, &status, 0);
 
+    std::string verb;
+    /// defaule
+    if(this->is_write_mode) {
+        verb = "written.";
+    } else {
+        verb = "removed.";
+    }
     if (WIFEXITED(status)) {
         int exit_code = WEXITSTATUS(status);
         if (exit_code == 0) {
             ///DEBUG
-            std::cout << "Helper Writer process executed successfully. File should be written." << std::endl;
+            std::cout << "Helper Writer process executed successfully. The requested file has been " << verb << std::endl;
         } else {
             std::cerr << "Helper Writer process exited with error code: " << exit_code << std::endl;
             std::cerr << "Check Helper Writer's stderr output (if any was printed to the same terminal)." << std::endl;

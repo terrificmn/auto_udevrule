@@ -67,6 +67,7 @@ bool UdevMaker::getIsPolicyKitNeeded() {
 /// @return 
 bool UdevMaker::setSymlink(int v_list_index, std::shared_ptr<TtyUdevInfo> shared_tty_udev_info) {
     if(!shared_tty_udev_info) {
+        std::cerr << "shared_tty_udev_info is not initialized." << std::endl;
         return false;
     }
     // std::cout << "set symlink ...\n";
@@ -446,16 +447,42 @@ int UdevMaker::createUdevRuleFileWithFork(std::shared_ptr<TtyUdevInfo> shared_tt
 }
 
 
+int UdevMaker::deleteUdevRuleFileWithFork(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info) {
+    SubProcessWriter subProcessWriter(false);  /// false for removal 
+
+    /// process 
+    /// 1. open a file
+    /// 2. send the path
+    /// 3. send "DEL" for removal
+
+    std::string target_del_path = this->udev_path + "/" + this->getUdevRuleFilename();
+    std::cout << "Atempting to write to " << target_del_path << " to remove a file." << std::endl;
+
+    bool res = subProcessWriter.startProcess(this->HELPER_WRITER_FULL_PATH);
+    if(!res) {
+        return 1;
+    }
+
+     // 2. send udev path : //FYI: '\n' 을 붙여야지 Heler writer 에서 입력이 완료
+    if(!subProcessWriter.writeLine(target_del_path)) {
+        std::cerr << "Failed to write the target path" << std::endl;
+        return -3;
+    }
+    ///FYI: no need to use fflush rather than fprintf with popen
+
+    /// 3. "DEL" keyword 로 보내야 delete mode 가 작동
+    if(!subProcessWriter.writeLine("DEL")) {
+        std::cerr << "Failed to delete" << std::endl;
+        return -4;
+    }
+
+    return subProcessWriter.finishProcess();
+}
+
 int UdevMaker::deleteUdevruleFile() {
     std::cout << "Now.. delete begins..\n";
     ///FYI: use the helper_writer with sudo for the security 
-    std::string cmd;
-    if(!this->is_policy_kit_needed) {
-        cmd = "sudo " + this->HELPER_WRITER_FULL_PATH;
-    } else {
-        cmd = "pkexec bash -c \"" + this->HELPER_WRITER_FULL_PATH + "\"";
-    }
-
+    std::string cmd = "sudo " + this->HELPER_WRITER_FULL_PATH;
     std::string target_del_path = this->udev_path + "/" + this->getUdevRuleFilename();
     std::cout << "Atempting to write to " << target_del_path << std::endl;
 

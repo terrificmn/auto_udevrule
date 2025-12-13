@@ -33,6 +33,7 @@ public:
     bool executeUdevadmControl();
     int createUdevRuleFile(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
     int createUdevRuleFileWithFork(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
+    int deleteUdevRuleFileWithFork(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
     int deleteUdevruleFile();
     bool getUdevFilename(std::string* return_filename, int list_index);
     std::string& getUdevRuleFilename();

@@ -380,6 +380,7 @@ bool Manager::deleteMode() {
         std::cerr << "Exception error: " << e.what() << std::endl;
         return false;
     }
+
     bool result = this->ptrUdevMaker->getUdevFilename(&udev_filename, input_num);
     if(!result) {
         std::cerr << "Can't get the udev filename." << std::endl;
@@ -388,12 +389,9 @@ bool Manager::deleteMode() {
     if(!this->ttyUdevInfo) {
         this->ttyUdevInfo = std::make_shared<TtyUdevInfo>();
     }
+
     // std::cout << "Now trying to remove is " << udev_filename << std::endl;
-    this->ptrUdevMaker->setSymlink(input_num, this->ttyUdevInfo);
-
-    // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
-    int fin_result = this->ptrUdevMaker->deleteUdevruleFile();
-
+    bool fin_result = this->removeUdevRule(input_num);
     if(fin_result != 0) {
         std::cerr << "\n== Failed to delete the udev rule. ==\n\n";
         std::cout << "error code: " << fin_result << std::endl;
@@ -402,4 +400,24 @@ bool Manager::deleteMode() {
 
     std::cout << "Please re-launch the program if you want to use it again. Thank you." << std::endl;
     return true;
+}
+
+int Manager::removeUdevRule(int input_num) {
+    this->ptrUdevMaker->setSymlink(input_num, this->ttyUdevInfo);
+
+    if(this->ptrUdevMaker->getIsPolicyKitNeeded()) {   
+        int res = this->ptrUdevMaker->deleteUdevRuleFileWithFork(this->ttyUdevInfo);
+        if(res == 0) {
+            std::vector<std::string> cmd_result_data;
+            std::string cmd = "udevadm control --reload-rules; udevadm trigger";
+            this->mUsbInfoConfirmer.executeCmd(cmd_result_data, cmd, ResultType::EXECUTE_ONLY);
+            return 0;
+        }
+        return res;
+
+    } else {
+        // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
+        return this->ptrUdevMaker->deleteUdevruleFile();
+    }
+    
 }
