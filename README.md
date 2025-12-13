@@ -1,44 +1,115 @@
 # udev rule 장치명 추출하기
-usb로 연결된 장치의 장치id, 커널id, 벤더id, 모델id 등을 추출해주는 프로그램
+USB 장치의 디바이스id, 커널id, 벤더id, 모델id 등을 인식 후 udev rule 파일을 만들어서  
+심링크로 해당 ttyUSB 를 연결 해주는 프로그램
 
-> 마지막으로 검색 된 장치만 사용됨 
+지원 되는 타입 ttyUSB, ttyACM  
+**마지막으로 검색 된 장치**만 연결: (마지막으로 usb 인식이 된 장치)  
 
-빌드하기
+TODO: 여러 장치 인식 기능 업데이트 예정
+
+## 실행 옵션 -s, -m, -h   
+-s : 한번만 검색 후 종료   
+~~-m : 여러번 검색 가능,~~ *deprecated*  
+-d : 생성된 파일 및 symlink 장치를 지울 때 사용, 장치를 선택   
+-i : 프롬프트를 보면서 장치에 하나씩 입력  
+-h : 파라미터 설명  
+-v : 버전  
+
+
+## 사용법
+#### 준비,  
+1. 실행 파일을 다운로드 후에 auto_udevrule 디렉토리를 만들고 이동  
+  ```
+  mkdir ~/auto_udevrule
+  mv ~/Downloads/getudev ~/auto_udevrule/   ## 또는 getudev-ubuntu 파일
+  ```
+2. 최초 실행을 (-s 옵션으로 실행) 해준다.   
+  이후 ref 디렉토리가 만들어지고, 각 list_file, config.lua 파일이 생성이 된다.   
+  
+3. 프로그램을 재 실행 한다. 이하 *실행* 부분을 참고한다. 
+
+
+#### 실행. 
+1. 먼저 실행파일 있는 디렉토리에 있는 ref 디렉토리의 list_file을 선택한다.  
+  여기의 파일들이 심링크 이름 및 /etc/udev/ 이하의 파일명으로 사용 되므로 원하는 이름으로 변경해준다.   
+  (vi, gedit, vscode 등으로 편집해준다, default 는 수정 없이 사용)   
+    * 아래의 [ref 디렉토리 설명 부분을 참고 하세요](#ref-디렉토리)  
+2. config.lua 파일에서 kernel, serial 데이터를 사용 여부를 true/false 지정해준다.  
+3. 특정 장치에 연결된 usb 케이블을 pc에 연결해준다.   
+4. getudev 실행파일을 실행 시켜서 옵션을 선택한다.  (예 `./getudev -s`)   
+5. 화면에 나온 원하는 장치의 번호를 누른 후 엔터   
+6. 관리자 비밀번호를 넣어서 장치 관련 파일 업데이트가 된다.   
+
+
+## 빌드  
+빌드가 따로 필요 할 경우, 클론 후 빌드 한다.   
+깃 클론  
 ```
-g++ -std=c++17 -o getudev src/main.cpp src/usb_checker.cpp src/udev_maker.cpp -I include
+git clone https://github.com/terrificmn/auto_udevrule.git
 ```
 
-> std::filesystem 추가로 인해서 c++17 버전으로 빌드
-
-
-실행 
+### 의존성 패키지 설치
+on Fedora
 ```
-./getudev
+sudo dnf install lua-devel
 ```
 
-## github에서 getudev 다운
-전체 소스코드 다운 할 필요 없이   
-(테스트는 안해봤지만), getudev 파일 다운 받아서 바로 실행 가능 하다..   
+on Ubuntu
+```
+sudo apt install liblua5.3-dev
+```
+> 우분투 20 / 22 에서도 5.3을 설치, 다만 빌드 시에 변수 설정을 해줘야 함(우분투 20)  
 
-[깃허브에서 실행 파일 다운로드](https://github.com/terrificmn/auto_udevrule/blob/main/getudev)  
+디렉토리 이동 후 빌드
+```
+cd ~/auto_udevrule
+```
 
-권한 때문에 실행이 안 된다면, `chmod +x ./getudev` 해 준 후 실행   
+빌드하기 g++ 로 빌드를 한다.  
+**(공통)** helper writer 빌드
+```
+g++ -std=c++17 -o helper_writer sub-src/helper_writer.cpp
+```
 
-> Rocky Linux 9 실행 가능, Ubuntu 20.04 테스트 필요...
+> 빌드가 된 후 해당 파일을 ~/.local/share/auto_udevrule/ 이하에 설치 해준다. 
 
+```
+cp ~/auto_udevrule/helper_writer ~/.local/share/auto_udevrule/
+```
+> g++ 으로만 빌드하려고 했는데, cmake 도입 해야 할지도 모르겠다;;;
 
-## 옵션 -s, -m, -h   
-- -s : 한번만 검색 후 종료   
+메인 프로그램
+```
+g++ -std=c++17 -o getudev src/main.cpp src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/manager.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua5.3 -ldl -DUBUNTU_20=true
+```
+> ubuntu 22 또는 fedora 에서는 -llua 이면 충분  
+단, ubuntu 20 에서는 -llua5.3 으로 해주고, -DUBUNTU_20=true 로 설정  
 
-- -m : 여러번 검색 가능, 
-    0 은 list_file 목록 그대로 순차적으로 실행  
-    1+ 0 외에 다른 숫자 입력시 리스트에서 고를 수 있는 모드.
+**(옵션)** 라이브러리로 만들기 (without main)
+```
+g++ -std=c++17 -shared -fPIC -o libauto_udevrule.so.0.1.6 src/usb_checker.cpp src/udev_maker.cpp src/lua_config.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua -ldl
+```
 
-- -h : 파라미터 설명
+**(옵션)** 라이브러리로 만들기 - ubuntu20.04 lua5.3 빌드 (without main) - 아래 우분투 용 빌드 참고
+```
+g++ -std=c++17 -shared -fPIC -o libauto_udevrule.so.0.1.6 src/usb_checker.cpp src/udev_maker.cpp src/lua_config.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua5.3 -ldl
+```
+
+우분투 용 빌드 (20.04 - lua5.3)
+```
+g++ -std=c++17 -o getudev-ubuntu src/main.cpp src/usb_checker.cpp src/udev_maker.cpp src/lua_config.cpp src/manager.cpp src/time_checker.cpp -I `pwd`/include -llua5.3 -ldl -DUBUNTU_20=true
+```
+
+> std::filesystem 추가로 인해서 c++17 버전으로 빌드   
+
 
 ## ref 디렉토리
 (새로 업데이트 OnDec17 2023) 처음 실행파일만 있고 다른 파일이 없을 경우에는  
-ref 디렉토리 및 list_file 을 만들어 준다. 최초 실행만 해주면 된다.  
+ref 디렉토리 및 list_file 을 만들어 준다. 최초 실행만 해주면 된다.   
+최초 실행 시 리스트 파일이 없다면 만들어 준다.
+```
+./getudev -s
+```
 
 ref/list_file 에서 리스트 목록을 불러오므로 실행 파일과 `ref/list_file` 은 같이 있어야 함.   
 
@@ -56,6 +127,6 @@ zltech-motor
 faduino-upload
 ```
 
-실행 후 파일명은 90-zltech-motor 식으로 만들어지고, 장치를 검색했을 경우 `/dev/ttyZltechMotor` 로 표시되게 된다.  
+실행 후 파일명은 **90-zltech-motor** 식으로 만들어지고, 장치를 검색했을 경우 `/dev/ttyZltechMotor` 로 표시되게 된다.  
 
 
