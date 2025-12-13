@@ -7,19 +7,12 @@
 #include "lua_config.hpp"
 #include "sudo_manager.hpp"
 
-constexpr const char* VERSION = "1.1.0";
+constexpr const char* VERSION = "1.2.0";
 
 extern "C" {
-#if UBUNTU_20
-    //// 우분투 20 case
-    #include <lua5.3/lua.h>
-    #include <lua5.3/lualib.h>
-    #include <lua5.3/lauxlib.h>
-#else
     #include <lua.h>
     #include <lualib.h>
     #include <lauxlib.h>
-#endif
 }
 
 void helpMsg();
