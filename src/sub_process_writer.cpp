@@ -50,8 +50,9 @@ bool SubProcessWriter::startProcess(const std::string& sub_prog_path) {
         // execute without shell wrapper
         execvp(program_exec, const_cast<char* const*>(args));
 
-        // if execvp fails
+        // if execvp fails (also child is terminated)
         _exit(127);
+        /// child process is GONE after execvp anyway --> 여기에서 흐름은 child -> sub program (helper_writer ) (자세히는 bash exit -> pkexec exit(GUI경우) -> child process sent output, closed pipe, then terminated)
     }
 
     /// parent process
@@ -111,16 +112,17 @@ int SubProcessWriter::finishProcess() {
 
     /// wait for child
     int status;
-    waitpid(this->m_pid, &status, 0);  /// block and wait
+    waitpid(this->m_pid, &status, 0);  /// block and wait for child to finish completely
 
-    std::string verb;
-    /// defaule
-    if(this->is_write_mode) {
-        verb = "written.";
-    } else {
-        verb = "removed.";
-    }
+    /// This runts once in parent
     if (WIFEXITED(status)) {
+        std::string verb;
+        /// defaule
+        if(this->is_write_mode) {
+            verb = "written.";
+        } else {
+            verb = "removed.";
+        }
         int exit_code = WEXITSTATUS(status);
         if (exit_code == 0) {
             ///DEBUG
