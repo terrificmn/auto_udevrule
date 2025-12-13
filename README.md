@@ -70,12 +70,6 @@ cd ~/auto_udevrule
 ```
 g++ -std=c++17 -o helper_writer sub-src/helper_writer.cpp
 ```
-> 빌드가 된 후 해당 파일을 ~/.local/share/auto_udevrule/ 이하에 설치 해준다. 
-
-```
-cp ~/auto_udevrule/helper_writer ~/.local/share/auto_udevrule/
-```
-> g++ 으로만 빌드하려고 했는데, cmake 도입 해야 할지도 모르겠다;;;
 
 2-1. 메인 프로그램
 ```
