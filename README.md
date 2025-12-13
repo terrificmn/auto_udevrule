@@ -1,33 +1,24 @@
 # udev rule 장치명 추출하기
-usb로 연결된 장치의 장치id, 커널id, 벤더id, 모델id 등을 추출해주는 프로그램  
-**마지막으로 검색 된 장치**만 사용됨: (마지막으로 usb 인식이 된 장치)
+USB 장치의 디바이스id, 커널id, 벤더id, 모델id 등을 인식 후 udev rule 파일을 만들어서  
+심링크로 해당 ttyUSB 를 연결 해주는 프로그램
 
-## github에서 실행 파일 getudev 다운로드
-전체 소스코드 클론 할 필요 없이 getudev 파일만 다운 받아서 바로 실행 가능 하다..   
-[깃허브 release 파일 다운로드](https://github.com/AMR-Labs/auto_udevrule/releases) 
+지원 되는 타입 ttyUSB, ttyACM  
+**마지막으로 검색 된 장치**만 연결: (마지막으로 usb 인식이 된 장치)  
 
-> 이후 권한 때문에 실행이 안 된다면,   
-> `chmod +x ./getudev` 해 준 후 실행해준다.(또는 getudev-ubuntu)    
-> Rocky Linux 9, fedora 는 첫 번째 파일, Ubuntu 20.04는 getudev-ubuntu 을 다운 받는다. 
-
+TODO: 여러 장치 인식 기능 업데이트 예정
 
 ## 실행 옵션 -s, -m, -h   
-- -s : 한번만 검색 후 종료   
-
-- -m : 여러번 검색 가능, 
-    0 은 list_file 목록 그대로 순차적으로 실행  
-    1+ 0 외에 다른 숫자 입력시 리스트에서 고를 수 있는 모드.
-
-- -d : 생성된 파일 및 symlink 장치를 지울 때 사용, 장치를 선택   
-
-- -i : 프롬프트를 보면서 장치에 하나씩 입력 
-
-- -h : 파라미터 설명
+-s : 한번만 검색 후 종료   
+~~-m : 여러번 검색 가능,~~ *deprecated*  
+-d : 생성된 파일 및 symlink 장치를 지울 때 사용, 장치를 선택   
+-i : 프롬프트를 보면서 장치에 하나씩 입력  
+-h : 파라미터 설명  
+-v : 버전  
 
 
 ## 사용법
 #### 준비,  
-1. 만약 실행파일만 받아서 하는 경우라면 먼저 디렉토리를 만들어 준후 다운로드 받은 파일을 이동  
+1. 실행 파일을 다운로드 후에 auto_udevrule 디렉토리를 만들고 이동  
   ```
   mkdir ~/auto_udevrule
   mv ~/Downloads/getudev ~/auto_udevrule/   ## 또는 getudev-ubuntu 파일
@@ -38,7 +29,7 @@ usb로 연결된 장치의 장치id, 커널id, 벤더id, 모델id 등을 추출�
 3. 프로그램을 재 실행 한다. 이하 *실행* 부분을 참고한다. 
 
 
-#### 실행. (또는 깃 클론 한 경우)
+#### 실행. 
 1. 먼저 실행파일 있는 디렉토리에 있는 ref 디렉토리의 list_file을 선택한다.  
   여기의 파일들이 심링크 이름 및 /etc/udev/ 이하의 파일명으로 사용 되므로 원하는 이름으로 변경해준다.   
   (vi, gedit, vscode 등으로 편집해준다, default 는 수정 없이 사용)   
@@ -49,15 +40,12 @@ usb로 연결된 장치의 장치id, 커널id, 벤더id, 모델id 등을 추출�
 5. 화면에 나온 원하는 장치의 번호를 누른 후 엔터   
 6. 관리자 비밀번호를 넣어서 장치 관련 파일 업데이트가 된다.   
 
-#### 확인. 
-`ls -l /dev/tty*` 등으로 장치가 있는지 확인하기   
 
-
-## 깃 클론 후 빌드하기
-소스 코드 사용 시 
-깃 클론 
+## 빌드  
+빌드가 따로 필요 할 경우, 클론 후 빌드 한다.   
+깃 클론  
 ```
-git clone https://github.com/AMR-Labs/auto_udevrule.git
+git clone https://github.com/terrificmn/auto_udevrule.git
 ```
 
 ### 의존성 패키지 설치
@@ -70,47 +58,49 @@ on Ubuntu
 ```
 sudo apt install liblua5.3-dev
 ```
-> 실행 파일만 받아서 사용하는 경우에는 필요하지 않다. 개발할 경우는 필요   
-> 우분투 20 기준으로는 5.3, 우분투 22는 5.4 버전이 가능   
-
+> 우분투 20 / 22 에서도 5.3을 설치, 다만 빌드 시에 변수 설정을 해줘야 함(우분투 20)  
 
 디렉토리 이동 후 빌드
 ```
 cd ~/auto_udevrule
 ```
 
-빌드
+빌드하기 g++ 로 빌드를 한다.  
 **(공통)** helper writer 빌드
 ```
 g++ -std=c++17 -o helper_writer sub-src/helper_writer.cpp
 ```
 
+> 빌드가 된 후 해당 파일을 ~/.local/share/auto_udevrule/ 이하에 설치 해준다. 
+
+```
+cp ~/auto_udevrule/helper_writer ~/.local/share/auto_udevrule/
+```
+> g++ 으로만 빌드하려고 했는데, cmake 도입 해야 할지도 모르겠다;;;
+
 메인 프로그램
 ```
 g++ -std=c++17 -o getudev src/main.cpp src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/manager.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua5.3 -ldl -DUBUNTU_20=true
 ```
-> ubuntu 22 또는 fedora 에서는 -llua 이면 충분
+> ubuntu 22 또는 fedora 에서는 -llua 이면 충분  
+단, ubuntu 20 에서는 -llua5.3 으로 해주고, -DUBUNTU_20=true 로 설정  
 
 **(옵션)** 라이브러리로 만들기 (without main)
 ```
-g++ -std=c++17 -shared -fPIC -o libauto_udevrule.so.0.1.6 src/usb_checker.cpp src/udev_maker.cpp src/lua_config.cpp src/time_checker.cpp src/sudo_manager.cpp -I `pwd`/include -llua -ldl
+g++ -std=c++17 -shared -fPIC -o libauto_udevrule.so.0.1.6 src/usb_checker.cpp src/udev_maker.cpp src/lua_config.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua -ldl
 ```
 
 **(옵션)** 라이브러리로 만들기 - ubuntu20.04 lua5.3 빌드 (without main) - 아래 우분투 용 빌드 참고
 ```
-g++ -std=c++17 -shared -fPIC -o libauto_udevrule.so.0.1.6 src/usb_checker.cpp src/udev_maker.cpp src/lua_config.cpp src/time_checker.cpp src/sudo_manager.cpp -I `pwd`/include -llua5.3 -ldl
+g++ -std=c++17 -shared -fPIC -o libauto_udevrule.so.0.1.6 src/usb_checker.cpp src/udev_maker.cpp src/lua_config.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua5.3 -ldl
 ```
 
 우분투 용 빌드 (20.04 - lua5.3)
 ```
-g++ -std=c++17 -o getudev-ubuntu src/main.cpp src/usb_checker.cpp src/udev_maker.cpp src/lua_config.cpp src/manager.cpp src/time_checker.cpp -I `pwd`/include -llua5.3 -ldl
+g++ -std=c++17 -o getudev-ubuntu src/main.cpp src/usb_checker.cpp src/udev_maker.cpp src/lua_config.cpp src/manager.cpp src/time_checker.cpp -I `pwd`/include -llua5.3 -ldl -DUBUNTU_20=true
 ```
-**IMPORTANT**: 일단 우분투 20일 경우에는 main.cpp/ lua_config.h 파일에서 *우분투 case 로 주석되어 있는 부분 해제해서   
-lua5.3 디렉토리로 지정해서 빌드해줘야 한다.   
-TODO: 추후 자동으로 할 수 있게 업데이트 예정   
 
 > std::filesystem 추가로 인해서 c++17 버전으로 빌드   
-> lua5.4 추가, 우분투 5.3
 
 
 ## ref 디렉토리
