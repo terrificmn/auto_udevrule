@@ -66,11 +66,10 @@ cd ~/auto_udevrule
 ```
 
 빌드하기 g++ 로 빌드를 한다.  
-**(공통)** helper writer 빌드
+1. **(공통)** helper writer 빌드
 ```
 g++ -std=c++17 -o helper_writer sub-src/helper_writer.cpp
 ```
-
 > 빌드가 된 후 해당 파일을 ~/.local/share/auto_udevrule/ 이하에 설치 해준다. 
 
 ```
@@ -78,30 +77,29 @@ cp ~/auto_udevrule/helper_writer ~/.local/share/auto_udevrule/
 ```
 > g++ 으로만 빌드하려고 했는데, cmake 도입 해야 할지도 모르겠다;;;
 
-메인 프로그램
+2-1. 메인 프로그램
 ```
-g++ -std=c++17 -o getudev src/main.cpp src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/manager.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua5.3 -ldl -DUBUNTU_20=true
+g++ -std=c++17 -o getudev src/main.cpp src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/manager.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua -ldl
 ```
 > ubuntu 22 또는 fedora 에서는 -llua 이면 충분  
 단, ubuntu 20 에서는 -llua5.3 으로 해주고, -DUBUNTU_20=true 로 설정  
 
-**(옵션)** 라이브러리로 만들기 (without main)
+2-2, 우분투 용 빌드 (20.04)
 ```
-g++ -std=c++17 -shared -fPIC -o libauto_udevrule.so.0.1.6 src/usb_checker.cpp src/udev_maker.cpp src/lua_config.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua -ldl
+g++ -std=c++17 -o getudev src/main.cpp src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/manager.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua5.3 -ldl -DUBUNTU_20=true
+```
+> Ubuntu22 경우, 2-1. 메인프로그램 방식으로 빌드
+
+3-1. **(옵션)** 라이브러리로 만들기 (without main)
+```
+g++ -std=c++17 -shared -fPIC -o libauto_udevrule.so.1.1.0 src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua -ldl
 ```
 
-**(옵션)** 라이브러리로 만들기 - ubuntu20.04 lua5.3 빌드 (without main) - 아래 우분투 용 빌드 참고
+3-2. **(옵션)** 라이브러리로 만들기 - ubuntu20.04 lua5.3 빌드 (without main) - 아래 우분투 용 빌드 참고
 ```
-g++ -std=c++17 -shared -fPIC -o libauto_udevrule.so.0.1.6 src/usb_checker.cpp src/udev_maker.cpp src/lua_config.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua5.3 -ldl
+g++ -std=c++17 -shared -fPIC -o libauto_udevrule.so.1.1.0 src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua5.3 -ldl -DUBUNTU_20=true
 ```
-
-우분투 용 빌드 (20.04 - lua5.3)
-```
-g++ -std=c++17 -o getudev-ubuntu src/main.cpp src/usb_checker.cpp src/udev_maker.cpp src/lua_config.cpp src/manager.cpp src/time_checker.cpp -I `pwd`/include -llua5.3 -ldl -DUBUNTU_20=true
-```
-
-> std::filesystem 추가로 인해서 c++17 버전으로 빌드   
-
+> Ubuntu22 경우, 3-1. 메인프로그램 방식으로 빌드
 
 ## ref 디렉토리
 (새로 업데이트 OnDec17 2023) 처음 실행파일만 있고 다른 파일이 없을 경우에는  
