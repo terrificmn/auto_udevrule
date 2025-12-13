@@ -14,6 +14,16 @@
 #include <regex>
 #include <algorithm>
 
+/// @brief Custom Deleter struct: called by std::unique_ptr<FILE, PipeCloser>
+struct PipeCloser {
+    void operator()(FILE* fp) const {
+        if(fp) {
+            /// FILE 있으면 close
+            pclose(fp);
+        }
+    }
+};
+
 class UsbInfoConfirmer {
 public:
     UsbInfoConfirmer(UdevMaker* udevMaker);

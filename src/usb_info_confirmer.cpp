@@ -85,22 +85,21 @@ std::vector<std::string> UsbInfoConfirmer::findUdevInfo(const bool& is_acm_detec
     return std::move(v_udev_result_data);
 }
 
-/// @brief TEST is needed. Not used currently.
+/// @brief TEST is needed. Not used currently, but it's ready to use.
 /// @param cmd_str 
 /// @return 
 bool UsbInfoConfirmer::executePopen(const std::string& cmd_str) {
-    char var[256];
     std::array<char, 128> buffer;
     std::string result;
 
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd_str.c_str(), "r"), pclose);
+    std::unique_ptr<FILE, PipeCloser> pipe(popen(cmd_str.c_str(), "r"));
     if(!pipe) {
         std::cerr << "popen() failed!" << std::endl;
     }
 
     while(fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        // cmd_result_data.push_back(var);
-        result = buffer.data();
+        result += buffer.data(); // append
+        //// result = buffer.data(); // (It replaces each time. maybe saving for the last result. )
     }
     
     if(!result.empty()) {
