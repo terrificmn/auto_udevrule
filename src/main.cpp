@@ -9,12 +9,6 @@
 
 constexpr const char* VERSION = "1.2.0";
 
-extern "C" {
-    #include <lua.h>
-    #include <lualib.h>
-    #include <lauxlib.h>
-}
-
 void helpMsg();
 
 int main(int argc, char** argv) {

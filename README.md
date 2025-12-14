@@ -65,7 +65,11 @@ sudo apt install liblua5.3-dev
 cd ~/auto_udevrule
 ```
 
+### g++ 빌드 
 빌드하기 g++ 로 빌드를 한다.  
+> 주로 Fedora 에서 작업 예정, Ubuntu 에서는 빌드 configure 시에 UBUNTU_DEV=true 로 사용  
+Release 빌드만 Ubuntu 20 에서 cmake 로 빌드 하기.  
+
 1. **(공통)** helper writer 빌드
 ```
 g++ -std=c++17 -o helper_writer sub-src/helper_writer.cpp
@@ -75,25 +79,26 @@ g++ -std=c++17 -o helper_writer sub-src/helper_writer.cpp
 ```
 g++ -std=c++17 -o getudev src/main.cpp src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/manager.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua -ldl
 ```
-> ubuntu 22 또는 fedora 에서는 -llua 이면 충분  
-단, ubuntu 20 에서는 -llua5.3 으로 해주고, -DUBUNTU_20=true 로 설정  
 
-2-2, 우분투 용 빌드 (20.04)
+2-2, 우분투 용 빌드 (20 / 22) - development 일 경우에만 사용  
+**중요**Release 빌드는 cmake 를 사용한다. - 크게 다른점, lua를 static으로 빌드
 ```
-g++ -std=c++17 -o getudev src/main.cpp src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/manager.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua5.3 -ldl -DUBUNTU_20=true
+g++ -std=c++17 -o getudev src/main.cpp src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/manager.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua5.3 -ldl -DUBUNTU_DEV=true
 ```
-> Ubuntu22 경우, 2-1. 메인프로그램 방식으로 빌드
+> UBUNTU_DEV=true 로 변수를 셋팅, 및 library 는 lua5.3
 
 3-1. **(옵션)** 라이브러리로 만들기 (without main)
 ```
 g++ -std=c++17 -shared -fPIC -o libauto_udevrule.so.1.1.0 src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua -ldl
 ```
 
-3-2. **(옵션)** 라이브러리로 만들기 - ubuntu20.04 lua5.3 빌드 (without main) - 아래 우분투 용 빌드 참고
+3-2. **(옵션)** 라이브러리로 만들기 - ubuntu 20/22 lua5.3 빌드 (without main)  
 ```
-g++ -std=c++17 -shared -fPIC -o libauto_udevrule.so.1.1.0 src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua5.3 -ldl -DUBUNTU_20=true
+g++ -std=c++17 -shared -fPIC -o libauto_udevrule.so.1.1.0 src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua5.3 -ldl -DUBUNTU_DEV=true
 ```
-> Ubuntu22 경우, 3-1. 메인프로그램 방식으로 빌드
+> UBUNTU_DEV=true 로 변수를 셋팅, 및 library 는 lua5.3  
+TODO: lua 포함하지 않는 g++ 또는 cmake 빌드 업데이트 예정
+
 
 ## ref 디렉토리
 (새로 업데이트 OnDec17 2023) 처음 실행파일만 있고 다른 파일이 없을 경우에는  

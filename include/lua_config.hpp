@@ -1,9 +1,16 @@
 #ifndef LUA_CONFIG_HPP
 #define LUA_CONFIG_HPP
 extern "C" {
+#if UBUNTU_DEV
+    ///FYI: Development for Ubuntu 20 / 22
+    #include <lua5.3/lua.h>
+    #include <lua5.3/lualib.h>
+    #include <lua5.3/lauxlib.h>
+#else
     #include <lua.h>
     #include <lualib.h>
     #include <lauxlib.h>
+#endif
 }
 #include <iostream>
 #include <filesystem>

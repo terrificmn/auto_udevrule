@@ -600,14 +600,9 @@ void UdevMaker::createBasicList(std::string list_full_path) {
         fs << "## If any device newly needs, then add its name the below.\n";
         fs << "faduino-upload\n";
         fs << "faduino-com\n";
-        fs << "front-lidar\n";
-        fs << "rear-lidar\n";
         fs << "esp\n";
-        fs << "amrbd\n";
-        fs << "amrbd-debug\n";
-        fs << "scale-1\n";
-        fs << "scale-2\n";
-        fs << "scale-3\n";
+        fs << "arudino-1\n";
+        fs << "my-sensor\n";
     }
     fs.close();
     std::cout << "A list_file has been created.\n";
