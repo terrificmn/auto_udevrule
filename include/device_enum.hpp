@@ -11,7 +11,7 @@ enum ResultType {
 };
 
 enum Mode {
-    SINGLE_MODE, MULTI_MODE, DELETE_MODE, INPUT_MODE
+    LAST_DETECT_MODE, ALL_DETECT_MODE, INPUT_MODE, DELETE_MODE
 };
 
 enum Type {
@@ -29,6 +29,7 @@ struct TtyUdevInfo {
     std::string vendor_db;
     /// MODEL_FROM_DATABASE=FT232 Serial (UART) IC
     /// VENDOR_FROM_DATABASE=Future Technology Devices International, Ltd
+    /// ID_USB_DRIVER=ch341
 };
 
 struct ResultData {

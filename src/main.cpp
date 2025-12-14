@@ -12,19 +12,19 @@ constexpr const char* VERSION = "1.2.0";
 void helpMsg();
 
 int main(int argc, char** argv) {
-    Mode mode = Mode::SINGLE_MODE;
+    Mode mode = Mode::LAST_DETECT_MODE;
     /// parameter part
     if(argc == 2) {
         std::string argv_str = argv[1];
-        if(argv_str == "-s") {
+        if(argv_str == "-l" || argv_str == "-s") { // 기존의 -s 모드
             // std::cout << argv[1] << std::endl;
-            std::cout << "*single mode selected*" << std::endl;
-            mode = Mode::SINGLE_MODE;
+            std::cout << "*Last mode(TEST) single mode selected*" << std::endl;
+            mode = Mode::LAST_DETECT_MODE;
 
-        } else if(argv_str == "-m") {
+        } else if(argv_str == "-a") {
             // std::cout << argv[1] << std::endl; // multiple use (like 10 times)
-            std::cout << "*multi mode selected*" << std::endl;
-            mode = Mode::MULTI_MODE;
+            std::cout << "*ALL(TEST) mode selected*" << std::endl;
+            mode = Mode::ALL_DETECT_MODE;
 
         } else if(argv_str == "-d") {
             std::cout << "*delete mode selected*" << std::endl;
