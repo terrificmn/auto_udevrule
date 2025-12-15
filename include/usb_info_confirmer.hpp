@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <unordered_map>
 #include <unistd.h>
 #include <sys/wait.h>
 #include "device_enum.hpp"
@@ -27,8 +28,13 @@ struct PipeCloser {
 class UsbInfoConfirmer {
 public:
     UsbInfoConfirmer(UdevMaker* udevMaker);
-    ResultData findNewDevice(const int& try_count);
+    ResultData findNewDevice(const int& try_count, const Mode& mode);
+    void findUsbNumber(ResultData& resultData);
+    void checkValidDevice(ResultData& resultData);
+    void deviceExist(ResultData& resultData);
+    void findUdevInfosWrapper(const bool& is_acm_detected);
     std::vector<std::string> findUdevInfo(const bool& is_acm_detected);
+    std::vector<std::string> findUdevInfo(int usb_id);
     std::string getUsbId();
 
     void executeCmd(std::vector<std::string>& cmd_result_data, const std::string& cmd_str, int process_result_type);
@@ -49,6 +55,10 @@ public:
     
     int showResult(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
     std::string getLsResult();
+
+protected:
+    using UnTtyUdevInfo = std::unordered_map<int, TtyUdevInfo>;
+    std::shared_ptr<UnTtyUdevInfo> sh_un_tty_udev_info;
 
 private:
     UdevMaker* ptrUdevMaker = nullptr;

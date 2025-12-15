@@ -2,7 +2,7 @@
 
 UsbInfoConfirmer::UsbInfoConfirmer(UdevMaker* udevMaker) : ptrUdevMaker(udevMaker) { }
 
-ResultData UsbInfoConfirmer::findNewDevice(const int& try_count) {
+ResultData UsbInfoConfirmer::findNewDevice(const int& try_count, const Mode& mode) {
     std::vector<std::string> v_result_data;
     ResultData resultData;
 
@@ -20,7 +20,25 @@ ResultData UsbInfoConfirmer::findNewDevice(const int& try_count) {
 
     // std::cout << "cmd_str: " << cmd_str << std::endl;
     /// TODO: 최초는 DMESG_SEARCH 이지만, UDEVINFO 찾을 경우에 대해서 업데이트 필요
-    this->executeCmd(v_result_data, cmd_str, ResultType::LAST_RESULT_ONLY);
+    if(mode == Mode::LAST_DETECT_MODE) {
+        this->executeCmd(v_result_data, cmd_str, ResultType::LAST_RESULT_ONLY);
+    } else if(mode == Mode::ALL_DETECT_MODE) {
+        this->executeCmd(v_result_data, cmd_str, ResultType::WHOLE_RESULT);
+        
+        ///TEST
+        v_result_data.push_back("[12524.612507] usb 1-9.2.1: pl2303 converter now attached to ttyUSB0");
+        v_result_data.push_back("[12612.210855] pl2303 ttyUSB0: pl2303 converter now disconnected from ttyUSB0");
+        v_result_data.push_back("[12613.500000] usb 1-9.2.3: pl2303 converter now attached to ttyUSB2");
+        v_result_data.push_back("[12616.500000] usb 1-9.2.4: pl2303 converter now attached to ttyUSB3");
+        v_result_data.push_back("[12613.572544] usb 1-9.2.1: pl2303 converter now attached to ttyUSB0");
+        v_result_data.push_back("[12614.669504] ftdi_sio ttyUSB1: Unable to write latency timer: -32");
+        v_result_data.push_back("[12614.670634] usb 1-9.2.2: FTDI USB Serial Device converter now attached to ttyUSB1");
+        v_result_data.push_back("[12615.210855] pl2303 ttyUSB0: pl2303 converter now disconnected from ttyUSB0");
+        v_result_data.push_back("[12615.612507] usb 1-9.2.1: pl2303 converter now attached to ttyUSB0");
+        v_result_data.push_back("[    8.362335] usb 3-2.1: cp210x converter now attached to ttyUSB1");
+        v_result_data.push_back("[    8.364675] usb 3-6.1: FTDI USB Serial Device converter now attached to ttyUSB0");
+        v_result_data.push_back("[    8.365392] usb 3-2.2: cp210x converter now attached to ttyUSB2");
+    }
 
     // 리턴 받은 값으로 비교 후 마지막 값을 ttyUSB 인지 확인 후 마지막 장치 번호를 리턴해준다.
     // std::cout << "--------------------------------------\n";
@@ -37,8 +55,19 @@ ResultData UsbInfoConfirmer::findNewDevice(const int& try_count) {
         return resultData;
     }
 
-    resultData.result_str = std::move(v_result_data.at(0));
+    if(mode == Mode::LAST_DETECT_MODE) {
+        resultData.result_str = std::move(v_result_data.at(0));
+        this->findUsbNumber(resultData);
 
+    } else {
+        resultData.result_v = std::move(v_result_data);
+        /// findUsbNumber() 는 하나 str만 처리하므로 더 테스트 필요
+    }
+
+    return resultData;
+}
+
+void UsbInfoConfirmer::findUsbNumber(ResultData& resultData) {
     /// usb device 넘버 찾기 - 끝자리만 찾음.
     if(resultData.tty_device == TTYDevice::USB) {
         size_t find_index = resultData.result_str.find("ttyUSB");
@@ -64,8 +93,150 @@ ResultData UsbInfoConfirmer::findNewDevice(const int& try_count) {
         resultData.found_device_num = -1;
         std::cerr << "Exception error. " << e.what() << std::endl;
     }
+}
 
-    return resultData;
+void UsbInfoConfirmer::checkValidDevice(ResultData& resultData) {
+    if(!this->sh_un_tty_udev_info) {
+        this->sh_un_tty_udev_info = std::make_shared<UnTtyUdevInfo>();
+    }
+
+    int result_size = resultData.result_v.size();
+    for(int i=result_size; i > 0;i--) {
+        std::string& result_str = resultData.result_v.at(i -1); // real index
+        if(result_str.find("attached") != std::string::npos) {
+            std::cout << "FOUND Device: ";
+
+            /// findUsbNumber() 중 ;
+            ///TODO: 변경 또는 업데이트 findUsbNumber()
+            size_t find_index = result_str.find("ttyUSB");
+            if(find_index != std::string::npos) {
+                // std::cout << "found index: " << find_index << std::endl;
+                std::string temp_usb_num = result_str.substr(find_index+6, 1); // extract the last index 
+                // this->m_usb_num_str = resultData.result_str.substr(find_index+6, 1); // extract the last index 
+                std::cout << "usb device id: " << temp_usb_num << std::endl;
+                int usb_id;
+                try {
+                    usb_id = std::stoi(temp_usb_num);
+                } catch(const std::exception& e) {
+                    std::cerr << "error while converting to number: " << e.what() << std::endl;
+                    continue;
+                }
+                
+                TtyUdevInfo ttyUdevInfo;
+                std::string kernel_id = this->getKernelId(result_str);
+                if(!kernel_id.empty()) {
+                    std::cout << "Okay. Found the USB device" << std::endl;
+                    ttyUdevInfo.kernel = kernel_id;
+
+                } else {
+                    std::cout << "Not Found the device for ttyUSB." << std::endl;
+                }
+                
+                auto [it, inserted] = this->sh_un_tty_udev_info->emplace(usb_id, ttyUdevInfo);
+                if(!inserted) {
+                    std::cout << usb_id << " already found. it will be skipped." << std::endl;
+                }
+                
+                //// the same but it will do double lookup (find() and operator[])
+                // auto it = this->sh_un_tty_udev_info->find(usb_id);
+                // if(it != this->sh_un_tty_udev_info->end()) {
+                //     std::cout << usb_id << " already found. it will be skipped." << std::endl;
+                //     continue;
+                    
+                // } else {
+                //     /// need to dereference
+                //     (*this->sh_un_tty_udev_info)[usb_id] = ttyUdevInfo;
+                // }
+            }
+        }
+
+    }
+
+    std::cout << "-----------------------------------\n";
+    for(auto tty: *this->sh_un_tty_udev_info) {
+        std::cout << "usb: " << tty.first << std::endl;
+        std::cout << "\t" << "kernel: " << tty.second.kernel << std::endl;
+    }
+}
+
+void UsbInfoConfirmer::deviceExist(ResultData& resultData) {
+    if(!this->sh_un_tty_udev_info) {
+        std::cerr << "shared_ptr sh_un_tty_dev_info not initialized" << std::endl;
+        return;
+    }
+
+    for(auto tty: *this->sh_un_tty_udev_info) {
+        // std::cout << "usb: " << tty.first << std::endl;
+        std::string usb_number = std::to_string(tty.first);
+        std::string cmd = "ls /dev/ttyUSB" + usb_number;
+        bool res = this->executeSimpleCmd(cmd);
+        if(!res) {
+            std::cout << "ttyUSB" << usb_number << " not connected." << std::endl;
+            (*this->sh_un_tty_udev_info)[tty.first].is_connected_now = false;
+            continue; /// still have one left
+        } else {
+            (*this->sh_un_tty_udev_info)[tty.first].is_connected_now = true;
+        }
+    }
+
+    std::cout << "-----------------------------------\n";
+    for(auto tty: *this->sh_un_tty_udev_info) {
+        std::cout << "usb: " << tty.first << std::endl;
+        std::cout << "\t" << "kernel: " << tty.second.kernel << std::endl;
+        std::cout << "\t" << "is_connected_now: "  << std::boolalpha << tty.second.is_connected_now << std::endl;
+    }
+
+}
+
+
+void UsbInfoConfirmer::findUdevInfosWrapper(const bool& is_acm_detected) {
+    if(!this->sh_un_tty_udev_info) {
+        std::cerr << "shared_ptr not initialized." << std::endl;
+        return;
+    }
+
+    for(auto& udev : *this->sh_un_tty_udev_info) {
+        std::vector<std::string> v_udev_str;
+        if(!udev.second.is_connected_now) {
+            std::cerr << udev.first << " is not connected right now. aborting to find the udev info" << std::endl;
+            continue;
+        }
+
+        //// TODO: is_connected_now 가 true 일 경우 아래 테스트 필요!
+        v_udev_str = this->findUdevInfo(udev.first);
+
+        std::string res_vender_id, res_model_id, res_serial_id;
+        for(int i=0; i< v_udev_str.size(); ++i) {
+            // res_vender_id = UsbInfoConfirmer.getVenderId(v_udev_str[i]);
+            if(this->getVenderId(v_udev_str[i]).empty() == false) {
+                res_vender_id = v_udev_str[i];
+            } 
+            if(this->getModelId(v_udev_str[i]).empty() == false) {
+                res_model_id = v_udev_str[i];
+            }
+            if(this->getSerialId(v_udev_str[i]).empty() == false) {
+                res_serial_id = v_udev_str[i];
+            }
+            /// loop until all strings are found.
+            if(!res_vender_id.empty() && !res_model_id.empty() && !res_serial_id.empty()) {
+                // std::cout << "break!" << std::endl;
+                break;
+            }
+        } // second loop
+
+        std::cout << "vendor_id : " << res_vender_id << std::endl;
+        std::cout << "model_id : " << res_model_id << std::endl;
+        std::cout << "serial_id : " << res_serial_id << std::endl;
+
+        /// step4. save value
+        udev.second.vendor = this->getIdsAterRegex(res_vender_id);
+        udev.second.product = this->getIdsAterRegex(res_model_id);
+        udev.second.serial = this->getIdsAterRegex(res_serial_id);
+        std::cout << "extracted vendor_id : " <<  udev.second.vendor << std::endl;
+        std::cout << "extracted model_id : " << udev.second.product  << std::endl;
+        std::cout << "extracted serial_id : " << udev.second.serial << std::endl;
+    } // first for loop end
+
 }
 
 std::vector<std::string> UsbInfoConfirmer::findUdevInfo(const bool& is_acm_detected) {
@@ -79,6 +250,31 @@ std::vector<std::string> UsbInfoConfirmer::findUdevInfo(const bool& is_acm_detec
     } else {
         concanated_cmd = this->m_udev_base_cmd + "USB" + usb_id;
     }
+
+    this->executeCmd(v_udev_result_data, concanated_cmd, ResultType::WHOLE_RESULT);
+
+    return std::move(v_udev_result_data);
+}
+
+
+std::vector<std::string> UsbInfoConfirmer::findUdevInfo(int usb_id) {
+    std::vector<std::string> v_udev_result_data;
+    std::string usb_id_str;
+    try {
+        usb_id_str = std::to_string(usb_id);
+
+    } catch(const std::exception& e) {
+        std::cerr << "Exception error while converting " << e.what() << std::endl;
+        return {};
+    }
+
+    std::string concanated_cmd;
+    concanated_cmd = this->m_udev_base_cmd + "USB" + usb_id_str;
+    // if(is_acm_detected) {
+    //     concanated_cmd = this->m_udev_base_cmd + "ACM" + usb_id;
+    // } else {
+    //     concanated_cmd = this->m_udev_base_cmd + "USB" + usb_id;
+    // }
 
     this->executeCmd(v_udev_result_data, concanated_cmd, ResultType::WHOLE_RESULT);
 

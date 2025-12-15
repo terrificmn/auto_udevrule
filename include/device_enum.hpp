@@ -1,6 +1,7 @@
 #ifndef DEVICE_ENUM_HPP
 #define DEVICE_ENUM_HPP
 #include <string>
+#include <vector>
 
 enum TTYDevice {
     USB, ACM
@@ -27,12 +28,14 @@ struct TtyUdevInfo {
     std::string symlink_name;
     std::string model_db;
     std::string vendor_db;
+    bool is_connected_now;
     /// MODEL_FROM_DATABASE=FT232 Serial (UART) IC
     /// VENDOR_FROM_DATABASE=Future Technology Devices International, Ltd
     /// ID_USB_DRIVER=ch341
 };
 
 struct ResultData {
+    std::vector<std::string> result_v;
     std::string result_str;
     TTYDevice tty_device = TTYDevice::USB;
     int found_device_num = -1;

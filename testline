@@ -125,3 +125,37 @@ E: ID_MM_PORT_IGNORE=1
 E: DEVLINKS=/dev/serial/by-path/pci-0000:00:14.0-usb-0:9.2.1:1.0-port0 /dev/serial/by-id/usb-FTDI_USB_Serial_Converter_FTC11S2U-if00-port0
 E: TAGS=:uaccess:systemd:seat:
 
+//ex
+[12524.612507] usb 1-9.2.1: pl2303 converter now attached to ttyUSB0
+[12612.210855] pl2303 ttyUSB0: pl2303 converter now disconnected from ttyUSB0
+[12613.500000] usb 1-9.2.3: pl2303 converter now attached to ttyUSB2
+[12613.572544] usb 1-9.2.2: pl2303 converter now attached to ttyUSB0
+[12614.669504] ftdi_sio ttyUSB1: Unable to write latency timer: -32
+[12614.670634] usb 1-9.2.1: FTDI USB Serial Device converter now attached to ttyUSB1
+[12615.210855] pl2303 ttyUSB0: pl2303 converter now disconnected from ttyUSB0
+[12615.612507] usb 1-9.2.1: pl2303 converter now attached to ttyUSB0
+[12616.500000] usb 1-9.2.4: pl2303 converter now attached to ttyUSB3
+
+
+/// real one
+[    8.173303] usb 3-2.1: cp210x converter now attached to ttyUSB0
+[    8.178077] usb 3-2.2: cp210x converter now attached to ttyUSB1
+[    8.227165] usb 3-6.1: FTDI USB Serial Device converter now attached to ttyUSB2
+
+[    8.362335] usb 3-2.1: cp210x converter now attached to ttyUSB1
+[    8.364675] usb 3-6.1: FTDI USB Serial Device converter now attached to ttyUSB0
+[    8.365392] usb 3-2.2: cp210x converter now attached to ttyUSB2
+
+
+[    8.169447] cdc_acm 3-3.1.1:1.0: ttyACM0: USB ACM device
+[    8.171184] cdc_acm 3-7:1.0: ttyACM1: USB ACM device
+[    8.175153] cdc_acm 3-5.2:1.0: ttyACM2: USB ACM device
+[    8.176450] cdc_acm 3-3.1.2:1.0: ttyACM3: USB ACM device
+[    8.177028] cdc_acm 3-3.1.3:1.0: ttyACM4: USB ACM device
+
+
+[    8.350564] cdc_acm 3-3.1.1:1.0: ttyACM0: USB ACM device
+[    8.350875] cdc_acm 3-7:1.0: ttyACM1: USB ACM device
+[    8.353176] cdc_acm 3-3.1.2:1.0: ttyACM2: USB ACM device
+[    8.353493] cdc_acm 3-5.2:1.0: ttyACM3: USB ACM device
+[    8.354063] cdc_acm 3-3.1.3:1.0: ttyACM4: USB ACM device

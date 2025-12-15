@@ -74,8 +74,8 @@ int main(int argc, char** argv) {
 
 void helpMsg() {
     std::cout << "help: add parameter -s, -m, or -d" << std::endl;
-    std::cout << "-s: single use" << std::endl;
-    std::cout << "-m: multiple use" << std::endl;
+    std::cout << "-l: detect the last device" << std::endl;
+    std::cout << "-a: detect all devices" << std::endl;
     std::cout << "-d: delete udevrules" << std::endl;
     std::cout << "-i: input mode manually" << std::endl;
     std::cout << "-v OR --version: version info" << std::endl;

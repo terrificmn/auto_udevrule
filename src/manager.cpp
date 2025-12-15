@@ -7,13 +7,13 @@ Manager::Manager(UdevMaker* udevMaker, const Mode& mode)
 
 void Manager::execute() {
     switch (m_mode) {
-        case Mode::SINGLE_MODE : {
+        case Mode::LAST_DETECT_MODE : {
             this->singleMode();
             break;
         }
 
-        case Mode::MULTI_MODE : {
-            this->mulipleMode();
+        case Mode::ALL_DETECT_MODE : {
+            this->allDetectMode();
             break;
         }
 
@@ -57,14 +57,14 @@ bool Manager::singleMode() {
     /// give options to the user
     std::string str_input = this->inputList("detect");
     if(str_input.empty()) {
-        std::cerr << "error\n";
+        std::cerr << "inputList error\n";
         return false;
     }
     
     /// detect usb device
     bool res = this->detectUsb();
     if(!res) {
-        std::cerr << "error\n";
+        std::cerr << "detectUsb error\n";
         return false;
     }
 
@@ -107,82 +107,44 @@ bool Manager::singleMode() {
 }
 
 
-bool Manager::mulipleMode() {
-    // bool is_auto = false;
-    // std::cout << "== Please select the mode" << std::endl;
-    // std::cout << "==>auto mode 0 : you can enter 0 to find it in order in a list." << std::endl;
-    // std::cout << "==>manual mode 1+ : you can enter any number except 0." << std::endl;
-    // std::cin >> str_input;
+bool Manager::allDetectMode() {
+    std::cout << "all detect mode" << std::endl;
+
+    bool res = this->detectUsbs();
+    if(!res) {
+        std::cerr << "detectUsbs error\n";
+        return false;
+    }
+
+    /// for the result
+    if(!this->ttyUdevInfo) {
+        std::cerr << "No shared TtyUdevInfo found." << std::endl;
+        return false;
+    }
+    std::cout << "\n/// udevInfo ///\n";
+    std::cout << "\tkernel: " << this->ttyUdevInfo->kernel << std::endl;
+    std::cout << "\tproduct: " << this->ttyUdevInfo->product << std::endl;
+    std::cout << "\tvendor: " << this->ttyUdevInfo->vendor << std::endl;
+    std::cout << "\tserial: " << this->ttyUdevInfo->serial << std::endl;
+    ///FYI: symlink can be assigned after makeUdevRule() is called.
+    std::cout << "\tsymlink_name: Not decided yet" <<  /* udevInfo.symlink_name  << */ std::endl;
     
-    // /// input check
-    // bool res_num = usbChecker.checkNumber(str_input);  // only 숫자
-    // if(!res_num) {
-    //     std::cerr << "only number available" << std::endl;
-    //     return 1;
-    // }
-
-    // if(str_input == "0") {
-    //     std::cout << "auto seletect" << std::endl;
-    //     is_auto = true;
-    // }
-
-    // for(int i=0; i < udevMaker.getVSize(); ++i ) {
-    //     if(is_auto) {
-    //         std::cout << "== Please plug in another device(usb cable)." << std::endl;
-    //         std::cout << "If plugged already, please press any key.. It will be continued to dectect the usb device.." << std::endl;
-    //         std::cout << "OR you can just hit ^c to exit.." << std::endl;
-    //         std::cin >> str_input;  // just use for blocking
-
-    //         bool res = usbChecker.detectUsb(); // default 1  // single use
-    //         if(!res) {
-    //             std::cerr << "error\n";
-    //             return 1;
-    //         }
-    //         // detection 이후 
-    //         udevMaker.setSymlink(i+1);  // 리스트를 1부터 출력해서 처리했으므로... 위의 입력과는 관계 없음. (순차적으로 만듬)
-            
-
-    //     } else {  // 입력 받은 INPUT 으로 처리 (싱글과 유사)
-    //         // 결국 싱글의 반복
-    //         std::cout << "== Please choose the device you want to detect.." << std::endl;
-    //         std::cout << "OR you can just hit ^c to exit.." << std::endl;
-    //         udevMaker.printList();
-    //         std::cin >> str_input;
-    //         /// input check
-    //         bool res_num = usbChecker.checkNumber(str_input);  // only 숫자
-    //         if(!res_num) {
-    //             std::cerr << "only number available" << std::endl;
-    //             return 1;
-    //         }
-
-    //         bool res = usbChecker.detectUsb(); // default 1  // single use
-    //         if(!res) {
-    //             std::cerr << "error\n";
-    //             return 1;
-    //         }
-
-    //         udevMaker.setSymlink(std::stoi(str_input)); //  입력 받은 값으로 symlink 이름 만들기
-    //     }
-
-    //     // FOR 문에서 공통 처리 부분
-    //     std::fstream fsScript;
-    //     bool open_res = udevMaker.openFile(&fsScript, "temp_script.sh", Type::WRITE);
-    //     if(!open_res) {
-    //         std::cerr << "file open failure" << std::endl;
-    //         return 1;
-    //     }
-
-    //     udevMaker.makeScript(&fsScript);
-    //     fsScript.close();
-
-    //     if(udevMaker.copyUdev()) {
-    //         std::cout << "\n== Copy complete!! ==\n\n";
-    //     }
-            
-    // } // end for loop
-
-    std::cout << "Not surpported yet." << std::endl;
-    return true;
+    ///FYI: for warning
+    if(this->ptrUdevMaker->getSerialWarn(this->ttyUdevInfo) ) {
+        std::cerr << "[warn]serial info not found. Please change 'use_serial' to false in the config.lua" << std::endl;
+        std::cerr << "[warn]device may not be found." << std::endl;
+    }
+    
+    /// make a file under /etc/udev/... 
+    int result = this->makeUdevRule(str_input);
+    if(result != 0) {
+        std::cerr << "\n== Failed to write the udev rule. ==\n\n";
+        return false;
+    }
+    ///DEBUG
+    std::cout << "\n== Copy complete!! ==\n\n";
+    
+    return false;
 }
 
 
@@ -192,7 +154,7 @@ bool Manager::detectUsb() {
 
     /// step 1. find new device - USB, ACM
     for(int i=0; i<2; i++) {
-        resultData = this->mUsbInfoConfirmer.findNewDevice(i);
+        resultData = this->mUsbInfoConfirmer.findNewDevice(i, Mode::LAST_DETECT_MODE);
         // std::cout << "return result string: " << resultData.result_str << std::endl;
 
         /// 1. time check
@@ -301,6 +263,72 @@ bool Manager::detectUsb() {
     std::cout << "extracted serial_id : " << this->ttyUdevInfo->serial << std::endl;
 
     return true;
+}
+
+
+bool Manager::detectUsbs() {
+    std::cout << "TEST detectUsbssss()\n";
+    ResultData resultData;
+    bool is_acm_detected = false; //default
+
+    /// step 1. find new device - USB, ACM
+    ///TODO: 일단 1번으로 테스트
+    for(int i=0; i<1; i++) {
+        ///vector
+        resultData = this->mUsbInfoConfirmer.findNewDevice(i, Mode::ALL_DETECT_MODE);
+        // std::cout << "return result string: " << resultData.result_str << std::endl;
+
+        auto& v_data = resultData.result_v;
+        if(!v_data.empty()) {
+            for(auto& str : v_data) {
+                std::cout << str << std::endl;
+            }
+        }
+
+        /// checkValidDevice 에서 usb_id 와 kernel_id 확인됨, shared_ptr<UnTtyUdevInfo> sh_un_tty_udev_info 도 만들어짐
+        this->mUsbInfoConfirmer.checkValidDevice(resultData);
+        
+        std::cout << "-------Does device really exists?" << std::endl;
+        this->mUsbInfoConfirmer.deviceExist(resultData);
+        
+        std::string cmd;
+        if(i == 0) { // first try
+            ///TODO: test Later
+        } 
+        ///TODO: ACM도 확인 필요..
+        /// for ACM
+        // else if(i == 1) { // second try
+        //     /// 3-1, check if the device number exists
+        //     if(resultData.found_device_num != -1) {
+        //         std::string cmd = "ls /dev/ttyACM" + std::to_string(resultData.found_device_num);
+        //         bool res = this->mUsbInfoConfirmer.executeSimpleCmd(cmd);
+        //         if(!res) {
+        //             std::cout << "ttyACM" << resultData.found_device_num << " is not connected." << std::endl;
+        //             return false;
+        //         }
+        //     }
+        //     /// 3-2. find kernel id
+        //     // if(this->getKernelIdForAcm(resultData.result_str).empty() == false && detected_time_result == true) { // the last try
+        //     if(this->mUsbInfoConfirmer.getKernelIdForAcm(resultData.result_str).empty() == false) { // the last try
+        //         std::cout << "Okay. Found the ACM device" << std::endl;
+        //         is_acm_detected = true;
+        //         break;
+        //     } else {
+        //         std::cout << "Not Found the device for ttyACM." << std::endl;
+        //         std::cout << "USB might be disconnected. Try it again.\n";
+        //         return false;
+        //     }
+        // }
+        // std::cout << std::endl;
+    } // for loop end
+
+     /// step3. get vender_id, model_id, and serial_id
+    this->mUsbInfoConfirmer.findUdevInfosWrapper(is_acm_detected);
+    
+    /// step4. now all information complete
+    ///TODO: 
+
+    return false;
 }
 
 /// @brief a wrapper function for createUdevruleFile()

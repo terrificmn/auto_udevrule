@@ -14,8 +14,9 @@ public:
     
     std::string inputList(const std::string& str_print);
     bool singleMode();
-    bool mulipleMode();
+    bool allDetectMode();
     bool detectUsb();
+    bool detectUsbs();
     int makeUdevRule(const std::string& input_str);
     
     bool inputMode();
