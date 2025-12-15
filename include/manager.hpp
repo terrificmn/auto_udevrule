@@ -17,6 +17,7 @@ public:
     bool allDetectMode();
     bool detectUsb();
     bool detectUsbs();
+    void proceedByVendor();
     int makeUdevRule(const std::string& input_str);
     
     bool inputMode();

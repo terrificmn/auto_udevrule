@@ -15,6 +15,8 @@ extern "C" {
 #include <iostream>
 #include <filesystem>
 #include <fstream>
+#include "device_enum.hpp"
+
 
 class LuaConfig {
 private:
@@ -32,6 +34,7 @@ public:
     static bool use_kernel;
     static bool use_serial;
     static double timeout_sec;
+    static LuaParam luaParam;
 
 };
 

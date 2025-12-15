@@ -95,7 +95,7 @@ void UsbInfoConfirmer::findUsbNumber(ResultData& resultData) {
     }
 }
 
-void UsbInfoConfirmer::checkValidDevice(ResultData& resultData) {
+void UsbInfoConfirmer::checkValidDevices(ResultData& resultData) {
     if(!this->sh_un_tty_udev_info) {
         this->sh_un_tty_udev_info = std::make_shared<UnTtyUdevInfo>();
     }
@@ -159,11 +159,15 @@ void UsbInfoConfirmer::checkValidDevice(ResultData& resultData) {
     }
 }
 
-void UsbInfoConfirmer::deviceExist(ResultData& resultData) {
+bool UsbInfoConfirmer::devicesExist(ResultData& resultData) {
     if(!this->sh_un_tty_udev_info) {
         std::cerr << "shared_ptr sh_un_tty_dev_info not initialized" << std::endl;
-        return;
+        return false;
     }
+
+    int failure_count = 0;
+    int total_usbs = this->sh_un_tty_udev_info->size();
+    std::cout << "****size: " << this->sh_un_tty_udev_info->size() << std::endl;
 
     for(auto tty: *this->sh_un_tty_udev_info) {
         // std::cout << "usb: " << tty.first << std::endl;
@@ -173,6 +177,7 @@ void UsbInfoConfirmer::deviceExist(ResultData& resultData) {
         if(!res) {
             std::cout << "ttyUSB" << usb_number << " not connected." << std::endl;
             (*this->sh_un_tty_udev_info)[tty.first].is_connected_now = false;
+            failure_count++;
             continue; /// still have one left
         } else {
             (*this->sh_un_tty_udev_info)[tty.first].is_connected_now = true;
@@ -186,6 +191,10 @@ void UsbInfoConfirmer::deviceExist(ResultData& resultData) {
         std::cout << "\t" << "is_connected_now: "  << std::boolalpha << tty.second.is_connected_now << std::endl;
     }
 
+    if(failure_count == total_usbs) {
+        return false;
+    }
+    return true;
 }
 
 
@@ -203,9 +212,9 @@ void UsbInfoConfirmer::findUdevInfosWrapper(const bool& is_acm_detected) {
         }
 
         //// TODO: is_connected_now 가 true 일 경우 아래 테스트 필요!
-        v_udev_str = this->findUdevInfo(udev.first);
+        v_udev_str = this->findUdevInfo(udev.first); // overload function
 
-        std::string res_vender_id, res_model_id, res_serial_id;
+        std::string res_vender_id, res_model_id, res_serial_id, res_vender_db_id;
         for(int i=0; i< v_udev_str.size(); ++i) {
             // res_vender_id = UsbInfoConfirmer.getVenderId(v_udev_str[i]);
             if(this->getVenderId(v_udev_str[i]).empty() == false) {
@@ -217,8 +226,11 @@ void UsbInfoConfirmer::findUdevInfosWrapper(const bool& is_acm_detected) {
             if(this->getSerialId(v_udev_str[i]).empty() == false) {
                 res_serial_id = v_udev_str[i];
             }
+            if(!this->getVenderDb(v_udev_str[i]).empty()) {
+                res_vender_db_id = v_udev_str[i];
+            }
             /// loop until all strings are found.
-            if(!res_vender_id.empty() && !res_model_id.empty() && !res_serial_id.empty()) {
+            if(!res_vender_id.empty() && !res_model_id.empty() && !res_serial_id.empty() && !res_vender_db_id.empty()) {
                 // std::cout << "break!" << std::endl;
                 break;
             }
@@ -227,14 +239,17 @@ void UsbInfoConfirmer::findUdevInfosWrapper(const bool& is_acm_detected) {
         std::cout << "vendor_id : " << res_vender_id << std::endl;
         std::cout << "model_id : " << res_model_id << std::endl;
         std::cout << "serial_id : " << res_serial_id << std::endl;
+        std::cout << "vendor_database : " << res_vender_db_id << std::endl;
 
         /// step4. save value
         udev.second.vendor = this->getIdsAterRegex(res_vender_id);
         udev.second.product = this->getIdsAterRegex(res_model_id);
         udev.second.serial = this->getIdsAterRegex(res_serial_id);
+        udev.second.vendor_db = this->getIdsAterRegex(res_vender_db_id);
         std::cout << "extracted vendor_id : " <<  udev.second.vendor << std::endl;
         std::cout << "extracted model_id : " << udev.second.product  << std::endl;
         std::cout << "extracted serial_id : " << udev.second.serial << std::endl;
+        std::cout << "extracted vendor_db_id : " << udev.second.vendor_db << std::endl;
     } // first for loop end
 
 }
@@ -649,6 +664,16 @@ std::string UsbInfoConfirmer::getSerialId(std::string& last_message) {
     return return_data;
 }
 
+std::string UsbInfoConfirmer::getVenderDb(std::string& last_message) {
+    // verder_database 넘버 추출
+    // VENDOR_FROM_DATABASE
+    std::string reg_str = "(ID_VENDOR_FROM_DATABASE=)";
+
+    std::string return_data = this->regexWrapper(last_message, reg_str);
+
+    return return_data;
+}
+
 
 /// @brief  vendor id or model id can be extracted here
 /// @param last_message 
@@ -684,6 +709,72 @@ bool UsbInfoConfirmer::checkNumber(std::string& input_msg) {
         return false;
     }
     return true;
+}
+
+void UsbInfoConfirmer::makeCopyUdevInfoByVendor() {
+    if(!this->sh_un_tty_udev_info) {
+        std::cerr << "shared_ptr sh_un_tty_dev_info not initialized" << std::endl;
+        return;
+    }
+
+    for(auto& udev : *this->sh_un_tty_udev_info) {
+        // udev.first
+        if(!udev.second.is_connected_now) {
+            std::cout << "usb " << udev.first << " skipped." << std::endl;
+            continue;
+        }
+        if(udev.second.vendor_db.find(LuaConfig::luaParam.lidar2d_main_vendor) != std::string::npos) {
+            std::cout << LuaConfig::luaParam.lidar2d_main_vendor << " vendor matched. " << udev.second.vendor_db << std::endl;
+            ///FYI: unorder_map은 not allow to have duplicated keys , map 도 마찬가지지만, vector로 추가하는 것은 가능
+            this->v_udev_by_vendor[LuaConfig::luaParam.lidar2d_main_vendor].push_back(udev.second);
+            this->v_udev_by_vendor[LuaConfig::luaParam.lidar2d_main_vendor].push_back(udev.second); /// For test
+            continue;
+        } else {
+            std::cout << "Not fount vendor." << std::endl;
+        }
+
+        if(udev.second.vendor_db.find(LuaConfig::luaParam.lidar2d_bottom_vendor) != std::string::npos) {
+            std::cout << LuaConfig::luaParam.lidar2d_bottom_vendor << " vendor matched. " << udev.second.vendor_db << std::endl;
+            ///FYI: unorder_map은 not allow to have duplicated keys , map 도 마찬가지지만, vector로 추가하는 것은 가능
+            this->v_udev_by_vendor[LuaConfig::luaParam.lidar2d_bottom_vendor].push_back(udev.second);
+            this->v_udev_by_vendor[LuaConfig::luaParam.lidar2d_bottom_vendor].push_back(udev.second); /// For test
+            continue;
+        } else {
+            std::cout << "Not fount vendor." << std::endl;
+        }
+
+        if(udev.second.vendor_db.find(LuaConfig::luaParam.loadcell_vendor) != std::string::npos) {
+            std::cout << LuaConfig::luaParam.loadcell_vendor << " vendor matched. " << udev.second.vendor_db << std::endl;
+            ///FYI: unorder_map은 not allow to have duplicated keys , map 도 마찬가지지만, vector로 추가하는 것은 가능
+            this->v_udev_by_vendor[LuaConfig::luaParam.loadcell_vendor].push_back(udev.second);
+            this->v_udev_by_vendor[LuaConfig::luaParam.loadcell_vendor].push_back(udev.second); /// For test
+            continue;
+        } else {
+            std::cout << "Not fount vendor." << std::endl;
+        }
+
+        // if(udev.second.vendor_db.find(LuaConfig::luaParam.) != std::string::npos) {
+        //     std::cout << "vendor matched. " << udev.second.vendor_db << std::endl;
+        //     ///FYI: unorder_map은 not allow to have duplicated keys , map 도 마찬가지지만, vector로 추가하는 것은 가능
+        //     this->v_udev_by_vendor[LuaConfig::luaParam.loadcell_vendor].push_back(udev.second);
+        //     this->v_udev_by_vendor[LuaConfig::luaParam.loadcell_vendor].push_back(udev.second); /// For test
+        //     continue;
+        // } else {
+        //     std::cout << "Not fount vendor." << std::endl;
+        // }
+    }
+
+    // check
+    auto& vecs = this->v_udev_by_vendor[LuaConfig::luaParam.lidar2d_main_vendor];
+    if(vecs.size() > 0) {
+        std::cout << "[" << LuaConfig::luaParam.lidar2d_main_vendor << "] info below" << std::endl;
+    }
+    for(auto& v : vecs) {
+        std::cout << "\tis_conneted: " << std::boolalpha << v.is_connected_now << std::endl;
+        std::cout << "\tvnedor_id: " << v.vendor << std::endl;
+        std::cout << "------------\n";
+    }
+    
 }
 
 int UsbInfoConfirmer::showResult(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info) {

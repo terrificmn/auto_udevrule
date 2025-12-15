@@ -41,4 +41,16 @@ struct ResultData {
     int found_device_num = -1;
 };
 
+struct LuaParam {
+    bool use_kernel;
+    bool use_serial;
+    double timeout_sec;
+    std::string lidar2d_main_vendor;
+    std::string lidar2d_bottom_vendor;
+    std::string lidar1d_luna_vendor;
+    std::string loadcell_vendor;
+    std::string amrbd_vendor;
+    std::string etc;
+};
+
 #endif // DEVICE_ENUM_HPP

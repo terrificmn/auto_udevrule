@@ -116,33 +116,19 @@ bool Manager::allDetectMode() {
         return false;
     }
 
-    /// for the result
-    if(!this->ttyUdevInfo) {
-        std::cerr << "No shared TtyUdevInfo found." << std::endl;
-        return false;
-    }
-    std::cout << "\n/// udevInfo ///\n";
-    std::cout << "\tkernel: " << this->ttyUdevInfo->kernel << std::endl;
-    std::cout << "\tproduct: " << this->ttyUdevInfo->product << std::endl;
-    std::cout << "\tvendor: " << this->ttyUdevInfo->vendor << std::endl;
-    std::cout << "\tserial: " << this->ttyUdevInfo->serial << std::endl;
-    ///FYI: symlink can be assigned after makeUdevRule() is called.
-    std::cout << "\tsymlink_name: Not decided yet" <<  /* udevInfo.symlink_name  << */ std::endl;
-    
-    ///FYI: for warning
-    if(this->ptrUdevMaker->getSerialWarn(this->ttyUdevInfo) ) {
-        std::cerr << "[warn]serial info not found. Please change 'use_serial' to false in the config.lua" << std::endl;
-        std::cerr << "[warn]device may not be found." << std::endl;
-    }
-    
-    /// make a file under /etc/udev/... 
-    int result = this->makeUdevRule(str_input);
-    if(result != 0) {
-        std::cerr << "\n== Failed to write the udev rule. ==\n\n";
-        return false;
-    }
-    ///DEBUG
-    std::cout << "\n== Copy complete!! ==\n\n";
+    this->proceedByVendor();
+
+    /// 기존 - 만들어진 정보 프린트
+    /// 기존 - 시리얼 관련 워닝 메세지 프린트
+    /// 기존 - makeUdevRule 실행    
+    // /// make a file under /etc/udev/... 
+    // int result = this->makeUdevRule(str_input);
+    // if(result != 0) {
+    //     std::cerr << "\n== Failed to write the udev rule. ==\n\n";
+    //     return false;
+    // }
+    // ///DEBUG
+    // std::cout << "\n== Copy complete!! ==\n\n";
     
     return false;
 }
@@ -285,11 +271,15 @@ bool Manager::detectUsbs() {
             }
         }
 
-        /// checkValidDevice 에서 usb_id 와 kernel_id 확인됨, shared_ptr<UnTtyUdevInfo> sh_un_tty_udev_info 도 만들어짐
-        this->mUsbInfoConfirmer.checkValidDevice(resultData);
+        /// checkValidDevices 에서 usb_id 와 kernel_id 확인됨, shared_ptr<UnTtyUdevInfo> sh_un_tty_udev_info 도 만들어짐
+        this->mUsbInfoConfirmer.checkValidDevices(resultData);
         
         std::cout << "-------Does device really exists?" << std::endl;
-        this->mUsbInfoConfirmer.deviceExist(resultData);
+        bool res = this->mUsbInfoConfirmer.devicesExist(resultData);
+        // if(!res) {
+        //     std::cout << "All devices are not connected..." << std::endl;
+        //     continue;
+        // }
         
         std::string cmd;
         if(i == 0) { // first try
@@ -328,7 +318,17 @@ bool Manager::detectUsbs() {
     /// step4. now all information complete
     ///TODO: 
 
-    return false;
+    return true;
+}
+
+void Manager::proceedByVendor() {
+    /// 1. 새로 만들어진 map을 통해서 진행 (VENDOR_FROM_DATABASE)
+    this->mUsbInfoConfirmer.makeCopyUdevInfoByVendor();
+
+    /// 2. 원하는 vendor db 로 순차적으로 진행
+    // makeCopyUdevInfoByVendor() 의 마지막 프린트 참고
+
+
 }
 
 /// @brief a wrapper function for createUdevruleFile()

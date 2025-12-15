@@ -30,8 +30,8 @@ public:
     UsbInfoConfirmer(UdevMaker* udevMaker);
     ResultData findNewDevice(const int& try_count, const Mode& mode);
     void findUsbNumber(ResultData& resultData);
-    void checkValidDevice(ResultData& resultData);
-    void deviceExist(ResultData& resultData);
+    void checkValidDevices(ResultData& resultData);
+    bool devicesExist(ResultData& resultData);
     void findUdevInfosWrapper(const bool& is_acm_detected);
     std::vector<std::string> findUdevInfo(const bool& is_acm_detected);
     std::vector<std::string> findUdevInfo(int usb_id);
@@ -48,17 +48,20 @@ public:
     std::string getVenderId(std::string& last_message);
     std::string getModelId(std::string& last_message);
     std::string getSerialId(std::string& last_message);
+    std::string getVenderDb(std::string& last_message);
     void removeCharacter(std::string& str, char remove_char);
 
     std::string getIdsAterRegex(std::string& last_message);
     bool checkNumber(std::string& input_msg);
     
+    void makeCopyUdevInfoByVendor();
     int showResult(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
     std::string getLsResult();
 
 protected:
     using UnTtyUdevInfo = std::unordered_map<int, TtyUdevInfo>;
     std::shared_ptr<UnTtyUdevInfo> sh_un_tty_udev_info;
+    std::map<std::string, std::vector<TtyUdevInfo>> v_udev_by_vendor;
 
 private:
     UdevMaker* ptrUdevMaker = nullptr;
