@@ -723,31 +723,34 @@ void UsbInfoConfirmer::makeCopyUdevInfoByVendor() {
             std::cout << "usb " << udev.first << " skipped." << std::endl;
             continue;
         }
-        if(udev.second.vendor_db.find(LuaConfig::luaParam.lidar2d_main_vendor) != std::string::npos) {
-            std::cout << LuaConfig::luaParam.lidar2d_main_vendor << " vendor matched. " << udev.second.vendor_db << std::endl;
+        // main lidar
+        if(udev.second.vendor_db.find(LuaConfig::luaParam.vendor_db1) != std::string::npos) {
+            std::cout << LuaConfig::luaParam.vendor_db1 << " vendor matched. " << udev.second.vendor_db << std::endl;
             ///FYI: unorder_map은 not allow to have duplicated keys , map 도 마찬가지지만, vector로 추가하는 것은 가능
-            this->v_udev_by_vendor[LuaConfig::luaParam.lidar2d_main_vendor].push_back(udev.second);
-            this->v_udev_by_vendor[LuaConfig::luaParam.lidar2d_main_vendor].push_back(udev.second); /// For test
+            this->v_udev_by_vendor[LuaConfig::luaParam.vendor_db1].push_back(udev.second);
+            this->v_udev_by_vendor[LuaConfig::luaParam.vendor_db1].push_back(udev.second); /// For test
             continue;
         } else {
             std::cout << "Not fount vendor." << std::endl;
         }
 
-        if(udev.second.vendor_db.find(LuaConfig::luaParam.lidar2d_bottom_vendor) != std::string::npos) {
-            std::cout << LuaConfig::luaParam.lidar2d_bottom_vendor << " vendor matched. " << udev.second.vendor_db << std::endl;
+        // botom lidar
+        if(udev.second.vendor_db.find(LuaConfig::luaParam.vendor_db2) != std::string::npos) {
+            std::cout << LuaConfig::luaParam.vendor_db2 << " vendor matched. " << udev.second.vendor_db << std::endl;
             ///FYI: unorder_map은 not allow to have duplicated keys , map 도 마찬가지지만, vector로 추가하는 것은 가능
-            this->v_udev_by_vendor[LuaConfig::luaParam.lidar2d_bottom_vendor].push_back(udev.second);
-            this->v_udev_by_vendor[LuaConfig::luaParam.lidar2d_bottom_vendor].push_back(udev.second); /// For test
+            this->v_udev_by_vendor[LuaConfig::luaParam.vendor_db2].push_back(udev.second);
+            this->v_udev_by_vendor[LuaConfig::luaParam.vendor_db2].push_back(udev.second); /// For test
             continue;
         } else {
             std::cout << "Not fount vendor." << std::endl;
         }
 
-        if(udev.second.vendor_db.find(LuaConfig::luaParam.loadcell_vendor) != std::string::npos) {
-            std::cout << LuaConfig::luaParam.loadcell_vendor << " vendor matched. " << udev.second.vendor_db << std::endl;
+        //loadcell_vendor
+        if(udev.second.vendor_db.find(LuaConfig::luaParam.vendor_db3) != std::string::npos) {
+            std::cout << LuaConfig::luaParam.vendor_db3 << " vendor matched. " << udev.second.vendor_db << std::endl;
             ///FYI: unorder_map은 not allow to have duplicated keys , map 도 마찬가지지만, vector로 추가하는 것은 가능
-            this->v_udev_by_vendor[LuaConfig::luaParam.loadcell_vendor].push_back(udev.second);
-            this->v_udev_by_vendor[LuaConfig::luaParam.loadcell_vendor].push_back(udev.second); /// For test
+            this->v_udev_by_vendor[LuaConfig::luaParam.vendor_db3].push_back(udev.second);
+            this->v_udev_by_vendor[LuaConfig::luaParam.vendor_db3].push_back(udev.second); /// For test
             continue;
         } else {
             std::cout << "Not fount vendor." << std::endl;
@@ -765,9 +768,9 @@ void UsbInfoConfirmer::makeCopyUdevInfoByVendor() {
     }
 
     // check
-    auto& vecs = this->v_udev_by_vendor[LuaConfig::luaParam.lidar2d_main_vendor];
+    auto& vecs = this->v_udev_by_vendor[LuaConfig::luaParam.vendor_db1];
     if(vecs.size() > 0) {
-        std::cout << "[" << LuaConfig::luaParam.lidar2d_main_vendor << "] info below" << std::endl;
+        std::cout << "[" << LuaConfig::luaParam.vendor_db1 << "] info below" << std::endl;
     }
     for(auto& v : vecs) {
         std::cout << "\tis_conneted: " << std::boolalpha << v.is_connected_now << std::endl;

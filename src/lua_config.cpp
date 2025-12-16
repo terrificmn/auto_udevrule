@@ -59,12 +59,12 @@ bool LuaConfig::initialze(const std::string& config_name, std::string override_p
         std::cout << "use_serial is " << std::boolalpha << LuaConfig::use_serial << std::endl;
         std::cout << "timeout_sec is " << LuaConfig::timeout_sec << std::endl;
         ///vendor info
-        std::cout << "lidar2d_main_vendor is " << LuaConfig::luaParam.lidar2d_main_vendor << std::endl;
-        std::cout << "lidar2d_bottom_vendor is " << LuaConfig::luaParam.lidar2d_bottom_vendor << std::endl;
-        std::cout << "lidar1d_luna_vendor is " << LuaConfig::luaParam.lidar1d_luna_vendor << std::endl;
-        std::cout << "loadcell_vendor is " << LuaConfig::luaParam.loadcell_vendor << std::endl;
-        std::cout << "amrbd_vendor is " << LuaConfig::luaParam.amrbd_vendor << std::endl;
-        std::cout << "etc is " << LuaConfig::luaParam.etc << std::endl;
+        std::cout << "vendor_db1 is " << LuaConfig::luaParam.vendor_db1 << std::endl;
+        std::cout << "vendor_db2 is " << LuaConfig::luaParam.vendor_db2 << std::endl;
+        std::cout << "vendor_db3 is " << LuaConfig::luaParam.vendor_db3 << std::endl;
+        std::cout << "vendor_db4 is " << LuaConfig::luaParam.vendor_db4 << std::endl;
+        std::cout << "vendor_db5 is " << LuaConfig::luaParam.vendor_db5 << std::endl;
+        std::cout << "vendor_db6 is " << LuaConfig::luaParam.vendor_db6 << std::endl;
         std::cout << "------------------------\n";
     }
 
@@ -81,12 +81,12 @@ void LuaConfig::createLuaFile(std::ofstream& creatFile) {
     use_serial = true,
     timeout_sec = 30,
     -- vendor info
-    lidar2d_main_vendor = "sllidar",
-    lidar2d_bottom_vendor = "coin",
-    lidar1d_luna_vendor = "esp-mini",
-    loadcell_vendor = "esp",
-    amrbd_vendor = "amr",
-    etc = "etc"
+    vendor_db1 = "sllidar",
+    vendor_db2 = "coin",
+    vendor_db3 = "esp-mini",
+    vendor_db4 = "esp",
+    vendor_db5 = "amr",
+    vendor_db6 = "etc"
 })");
     creatFile << context;
 }
@@ -126,48 +126,37 @@ bool LuaConfig::loadLuaData(const char* table_name) {
     }
     lua_pop(LuaConfig::s_L, 1);
 
-    lua_pushstring(LuaConfig::s_L, "lidar2d_main_vendor");
-    lua_gettable(LuaConfig::s_L, -2); // Get MyParm[tableName]
-    if(lua_tostring(LuaConfig::s_L, -1)) {
-        LuaConfig::luaParam.lidar2d_main_vendor = lua_tostring(LuaConfig::s_L, -1);
+    for(int i=1; i<7; ++i) {
+        std::string vendor_db = "vendor_db";
+        vendor_db+= std::to_string(i);
+        lua_pushstring(LuaConfig::s_L, vendor_db.c_str());
+        lua_gettable(LuaConfig::s_L, -2); // Get MyParm[tableName]
+        if(lua_tostring(LuaConfig::s_L, -1)) {
+            switch (i) {
+            case 1 :
+                LuaConfig::luaParam.vendor_db1 = lua_tostring(LuaConfig::s_L, -1);
+                break;
+            case 2 :
+                LuaConfig::luaParam.vendor_db2 = lua_tostring(LuaConfig::s_L, -1);
+                break;
+            case 3 :
+                LuaConfig::luaParam.vendor_db3 = lua_tostring(LuaConfig::s_L, -1);
+                break;
+            case 4 :
+                LuaConfig::luaParam.vendor_db4 = lua_tostring(LuaConfig::s_L, -1);
+                break;
+            case 5 :
+                LuaConfig::luaParam.vendor_db5 = lua_tostring(LuaConfig::s_L, -1);
+                break;
+            case 6 :
+                LuaConfig::luaParam.vendor_db6 = lua_tostring(LuaConfig::s_L, -1);
+                break;
+            default:
+                break;
+            }
+        }
+        lua_pop(LuaConfig::s_L, 1);
     }
-    lua_pop(LuaConfig::s_L, 1);
-
-    lua_pushstring(LuaConfig::s_L, "lidar2d_bottom_vendor");
-    lua_gettable(LuaConfig::s_L, -2); // Get MyParm[tableName]
-    if(lua_tostring(LuaConfig::s_L, -1)) {
-        LuaConfig::luaParam.lidar2d_bottom_vendor = lua_tostring(LuaConfig::s_L, -1);
-    }
-    lua_pop(LuaConfig::s_L, 1);
-
-    lua_pushstring(LuaConfig::s_L, "lidar1d_luna_vendor");
-    lua_gettable(LuaConfig::s_L, -2); // Get MyParm[tableName]
-    if(lua_tostring(LuaConfig::s_L, -1)) {
-        LuaConfig::luaParam.lidar1d_luna_vendor = lua_tostring(LuaConfig::s_L, -1);
-    }
-    lua_pop(LuaConfig::s_L, 1);
-
-    lua_pushstring(LuaConfig::s_L, "loadcell_vendor");
-    lua_gettable(LuaConfig::s_L, -2); // Get MyParm[tableName]
-    if(lua_tostring(LuaConfig::s_L, -1)) {
-        LuaConfig::luaParam.loadcell_vendor = lua_tostring(LuaConfig::s_L, -1);
-    }
-    lua_pop(LuaConfig::s_L, 1);
-
-    lua_pushstring(LuaConfig::s_L, "amrbd_vendor");
-    lua_gettable(LuaConfig::s_L, -2); // Get MyParm[tableName]
-    if(lua_tostring(LuaConfig::s_L, -1)) {
-        LuaConfig::luaParam.amrbd_vendor = lua_tostring(LuaConfig::s_L, -1);
-    }
-    lua_pop(LuaConfig::s_L, 1);
-
-    lua_pushstring(LuaConfig::s_L, "etc");
-    lua_gettable(LuaConfig::s_L, -2); // Get MyParm[tableName]
-    if(lua_tostring(LuaConfig::s_L, -1)) {
-        LuaConfig::luaParam.etc = lua_tostring(LuaConfig::s_L, -1);
-    }
-    lua_pop(LuaConfig::s_L, 1);
-
 
     lua_pop(LuaConfig::s_L, 1); // remove the table from the stack
     return true;

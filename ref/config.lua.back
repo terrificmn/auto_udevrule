@@ -3,9 +3,10 @@ PARAM = {
     use_serial = true,
     timeout_sec = 30,
     -- group
-    lidar2d_main_vendor = "sllidar",
-    lidar2d_bottom_vendor = "coin",
-    lidar1d_luna_vendor = "esp-mini",
-    loadcell_vendor = "esp",
-    amrbd_vendor = "amr"
+    vendor_db1 = "sllidar",
+    vendor_db2 = "coin",
+    vendor_db3 = "esp-mini",
+    vendor_db4 = "esp",
+    vendor_db5 = "amr",
+    vendor_db6 = "etc"
 }

@@ -45,12 +45,12 @@ struct LuaParam {
     bool use_kernel;
     bool use_serial;
     double timeout_sec;
-    std::string lidar2d_main_vendor;
-    std::string lidar2d_bottom_vendor;
-    std::string lidar1d_luna_vendor;
-    std::string loadcell_vendor;
-    std::string amrbd_vendor;
-    std::string etc;
+    std::string vendor_db1;
+    std::string vendor_db2;
+    std::string vendor_db3;
+    std::string vendor_db4;
+    std::string vendor_db5;
+    std::string vendor_db6;
 };
 
 #endif // DEVICE_ENUM_HPP
