@@ -19,6 +19,7 @@ public:
     bool detectUsbs();
     void proceedByVendor();
     int makeUdevRule(const std::string& input_str);
+    int makeUdevRuleByVendorDb(const std::string& config_vendor_db);
     
     bool inputMode();
     void inputSymlinkInManualMode();

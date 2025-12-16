@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <optional>
 #include "device_enum.hpp"
 #include "udev_maker.hpp"
 #include "time_checker.hpp"
@@ -55,6 +56,7 @@ public:
     bool checkNumber(std::string& input_msg);
     
     void makeCopyUdevInfoByVendor();
+    std::optional<std::vector<TtyUdevInfo>> tryUdevMatch(const std::string& config_vendor_db);
     int showResult(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
     std::string getLsResult();
 

@@ -116,19 +116,10 @@ bool Manager::allDetectMode() {
         return false;
     }
 
+    ///1. 전체를 makeUdevRule 실행하거나
+    ///2. 그룹별로 진행
     this->proceedByVendor();
 
-    /// 기존 - 만들어진 정보 프린트
-    /// 기존 - 시리얼 관련 워닝 메세지 프린트
-    /// 기존 - makeUdevRule 실행    
-    // /// make a file under /etc/udev/... 
-    // int result = this->makeUdevRule(str_input);
-    // if(result != 0) {
-    //     std::cerr << "\n== Failed to write the udev rule. ==\n\n";
-    //     return false;
-    // }
-    // ///DEBUG
-    // std::cout << "\n== Copy complete!! ==\n\n";
     
     return false;
 }
@@ -276,6 +267,7 @@ bool Manager::detectUsbs() {
         
         std::cout << "-------Does device really exists?" << std::endl;
         bool res = this->mUsbInfoConfirmer.devicesExist(resultData);
+        /// TODO: TEST 후 주석 해제
         // if(!res) {
         //     std::cout << "All devices are not connected..." << std::endl;
         //     continue;
@@ -328,6 +320,17 @@ void Manager::proceedByVendor() {
     /// 2. 원하는 vendor db 로 순차적으로 진행
     // makeCopyUdevInfoByVendor() 의 마지막 프린트 참고
 
+    /// 기존 - 시리얼 관련 워닝 메세지 프린트
+    // / 기존 - makeUdevRule 실행    
+    // /// make a file under /etc/udev/... 
+    int result = this->makeUdevRuleByVendorDb(LuaConfig::luaParam.vendor_db1);
+    // if(result != 0) {
+    //     std::cerr << "\n== Failed to write the udev rule. ==\n\n";
+    //     return false;
+    // }
+    // ///DEBUG
+    // std::cout << "\n== Copy complete!! ==\n\n";
+
 
 }
 
@@ -352,6 +355,81 @@ int Manager::makeUdevRule(const std::string& input_str) {
         // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
         return this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
     }
+}
+
+int Manager::makeUdevRuleByVendorDb(const std::string& config_vendor_db) {
+    auto opt = this->mUsbInfoConfirmer.tryUdevMatch(config_vendor_db);
+    if(!opt) {
+        return false;
+    }
+
+    
+    std::vector<TtyUdevInfo>& v_tty_udev = opt.value();
+    /// test i
+    int i = 0;
+    for(auto& v : v_tty_udev) {
+        std::cout << "\tis_conneted: " << std::boolalpha << v.is_connected_now << std::endl;
+        std::cout << "\tvendor_id: " << v.vendor << std::endl;
+        std::cout << "\tproduct_id: " << v.product << std::endl;
+        std::cout << "------------\n";
+
+        /// TEST 한번만
+        if(i++ == 0) {
+            if(!this->ttyUdevInfo) {
+               std::cout << "shared ptr ttyUdevInfo not initialized yet.\n";
+                this->ttyUdevInfo = std::make_shared<TtyUdevInfo>(v);
+            } else {
+                this->ttyUdevInfo.reset();
+                this->ttyUdevInfo = std::make_shared<TtyUdevInfo>(v);
+            }
+            std::cout << "After init shared_ptr: ttyUdevInfo\n";
+            std::cout << "\tis_conneted: " << std::boolalpha << this->ttyUdevInfo->is_connected_now << std::endl;
+            std::cout << "\tkernel_id: " << this->ttyUdevInfo->kernel << std::endl;
+            std::cout << "\tvendor_id: " << this->ttyUdevInfo->vendor << std::endl;
+            std::cout << "\tproduct_id: " << this->ttyUdevInfo->product << std::endl;
+            std::cout << "------------\n";
+
+            std::string str_input = this->inputList("add");
+            if(str_input.empty()) {
+                return 1;
+            }
+            int input_num;
+            try {
+                input_num = std::stoi(str_input);
+
+            } catch(const std::exception& e) {
+                std::cerr << "Exception error: " << e.what() << std::endl;
+                return 1;
+            }
+            ///FYI: for warning
+            if(this->ptrUdevMaker->getSerialWarn(this->ttyUdevInfo) ) {
+                std::cerr << "[warn]serial info not found. Please change 'use_serial' to false in the config.lua" << std::endl;
+                std::cerr << "[warn]device may not be found." << std::endl;
+            }
+
+            this->ptrUdevMaker->setSymlink(input_num, this->ttyUdevInfo);
+
+            if(this->ptrUdevMaker->getIsPolicyKitNeeded()) {   
+                int res = this->ptrUdevMaker->createUdevRuleFileWithFork(this->ttyUdevInfo);
+                if(res == 0) {
+                    std::vector<std::string> cmd_result_data;
+                    std::string cmd = "udevadm control --reload-rules; udevadm trigger";
+                    this->mUsbInfoConfirmer.executeCmd(cmd_result_data, cmd, ResultType::EXECUTE_ONLY);
+                    return 0;
+                }
+                return res;
+
+            } else {
+                // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
+                return this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
+            }
+        }
+        
+    }
+
+
+    
+    return 0;
 }
 
 bool Manager::inputMode() {
