@@ -76,7 +76,7 @@ bool Manager::singleMode() {
     std::cout << "\n/// udevInfo ///\n";
     std::cout << "\tkernel: " << this->ttyUdevInfo->kernel << std::endl;
     std::cout << "\tproduct: " << this->ttyUdevInfo->product << std::endl;
-    std::cout << "\tvendor: " << this->ttyUdevInfo->vendor << std::endl;
+    std::cout << "\vvendor_id: " << this->ttyUdevInfo->vendor_id << std::endl;
     std::cout << "\tserial: " << this->ttyUdevInfo->serial << std::endl;
     ///FYI: symlink can be assigned after makeUdevRule() is called.
     std::cout << "\tsymlink_name: Not decided yet" <<  /* udevInfo.symlink_name  << */ std::endl;
@@ -117,10 +117,21 @@ bool Manager::allDetectMode() {
     }
 
     ///1. 전체를 makeUdevRule 실행하거나
-    ///2. 그룹별로 진행
-    this->proceedByVendor();
 
-    
+    ///2. 그룹별로 진행
+    // 유저 반응에 따라 
+    // -->startThread();
+    while(true) {
+        std::string input;
+        std::cout << "Which group do you want to proceed?" << std::endl;
+        std::cin >> input;
+
+        this->proceedByVendor();
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+        std::cout << "loop\n";
+    }
+
     return false;
 }
 
@@ -232,10 +243,10 @@ bool Manager::detectUsb() {
     // std::cout << "serial_id : " << res_serial_id << std::endl;
 
     /// step4. save value
-    this->ttyUdevInfo->vendor = this->mUsbInfoConfirmer.getIdsAterRegex(res_vender_id);
+    this->ttyUdevInfo->vendor_id = this->mUsbInfoConfirmer.getIdsAterRegex(res_vender_id);
     this->ttyUdevInfo->product = this->mUsbInfoConfirmer.getIdsAterRegex(res_model_id);
     this->ttyUdevInfo->serial = this->mUsbInfoConfirmer.getIdsAterRegex(res_serial_id);
-    std::cout << "extracted vendor_id : " << this->ttyUdevInfo->vendor  << std::endl;
+    std::cout << "extracted vendor_id : " << this->ttyUdevInfo->vendor_id  << std::endl;
     std::cout << "extracted model_id : " << this->ttyUdevInfo->product  << std::endl;
     std::cout << "extracted serial_id : " << this->ttyUdevInfo->serial << std::endl;
 
@@ -247,61 +258,32 @@ bool Manager::detectUsbs() {
     std::cout << "TEST detectUsbssss()\n";
     ResultData resultData;
     bool is_acm_detected = false; //default
+    int failure_cnt =0;
 
     /// step 1. find new device - USB, ACM
-    ///TODO: 일단 1번으로 테스트
-    for(int i=0; i<1; i++) {
+    for(int i=0; i<2; i++) {
         ///vector
         resultData = this->mUsbInfoConfirmer.findNewDevice(i, Mode::ALL_DETECT_MODE);
         // std::cout << "return result string: " << resultData.result_str << std::endl;
-
-        auto& v_data = resultData.result_v;
-        if(!v_data.empty()) {
-            for(auto& str : v_data) {
-                std::cout << str << std::endl;
-            }
-        }
+        // auto& v_data = resultData.result_v;
+        // if(!v_data.empty()) {
+        //     for(auto& str : v_data) {
+        //         std::cout << str << std::endl;
+        //     }
+        // }
 
         /// checkValidDevices 에서 usb_id 와 kernel_id 확인됨, shared_ptr<UnTtyUdevInfo> sh_un_tty_udev_info 도 만들어짐
-        this->mUsbInfoConfirmer.checkValidDevices(resultData);
+        this->mUsbInfoConfirmer.checkValidDevices(i, resultData);
         
-        std::cout << "-------Does device really exists?" << std::endl;
-        bool res = this->mUsbInfoConfirmer.devicesExist(resultData);
-        /// TODO: TEST 후 주석 해제
-        // if(!res) {
-        //     std::cout << "All devices are not connected..." << std::endl;
-        //     continue;
-        // }
+        bool res = this->mUsbInfoConfirmer.devicesExist(i, resultData);
+        if(!res) {
+            failure_cnt++;
+            if(failure_cnt == 2) {
+                std::cout << "All devices are not connected..." << std::endl;
+                return false;
+            }
+        }
         
-        std::string cmd;
-        if(i == 0) { // first try
-            ///TODO: test Later
-        } 
-        ///TODO: ACM도 확인 필요..
-        /// for ACM
-        // else if(i == 1) { // second try
-        //     /// 3-1, check if the device number exists
-        //     if(resultData.found_device_num != -1) {
-        //         std::string cmd = "ls /dev/ttyACM" + std::to_string(resultData.found_device_num);
-        //         bool res = this->mUsbInfoConfirmer.executeSimpleCmd(cmd);
-        //         if(!res) {
-        //             std::cout << "ttyACM" << resultData.found_device_num << " is not connected." << std::endl;
-        //             return false;
-        //         }
-        //     }
-        //     /// 3-2. find kernel id
-        //     // if(this->getKernelIdForAcm(resultData.result_str).empty() == false && detected_time_result == true) { // the last try
-        //     if(this->mUsbInfoConfirmer.getKernelIdForAcm(resultData.result_str).empty() == false) { // the last try
-        //         std::cout << "Okay. Found the ACM device" << std::endl;
-        //         is_acm_detected = true;
-        //         break;
-        //     } else {
-        //         std::cout << "Not Found the device for ttyACM." << std::endl;
-        //         std::cout << "USB might be disconnected. Try it again.\n";
-        //         return false;
-        //     }
-        // }
-        // std::cout << std::endl;
     } // for loop end
 
      /// step3. get vender_id, model_id, and serial_id
@@ -314,7 +296,7 @@ bool Manager::detectUsbs() {
 }
 
 void Manager::proceedByVendor() {
-    /// 1. 새로 만들어진 map을 통해서 진행 (VENDOR_FROM_DATABASE)
+    /// 1. 새로 만들어진 map을 통해서 진행 (VENDOR_FROM_DATABASE), 첫 시도만 만듬
     this->mUsbInfoConfirmer.makeCopyUdevInfoByVendor();
 
     /// 2. 원하는 vendor db 로 순차적으로 진행
@@ -323,7 +305,7 @@ void Manager::proceedByVendor() {
     /// 기존 - 시리얼 관련 워닝 메세지 프린트
     // / 기존 - makeUdevRule 실행    
     // /// make a file under /etc/udev/... 
-    int result = this->makeUdevRuleByVendorDb(LuaConfig::luaParam.vendor_db1);
+    int result = this->makeUdevRuleByProductCategory("product_category_0");
     // if(result != 0) {
     //     std::cerr << "\n== Failed to write the udev rule. ==\n\n";
     //     return false;
@@ -357,78 +339,76 @@ int Manager::makeUdevRule(const std::string& input_str) {
     }
 }
 
-int Manager::makeUdevRuleByVendorDb(const std::string& config_vendor_db) {
-    auto opt = this->mUsbInfoConfirmer.tryUdevMatch(config_vendor_db);
+int Manager::makeUdevRuleByProductCategory(const std::string product_category_name) {
+    auto opt = this->mUsbInfoConfirmer.getTtyUdevInfoVec(product_category_name);
     if(!opt) {
-        return false;
+        return 1;
     }
 
-    
     std::vector<TtyUdevInfo>& v_tty_udev = opt.value();
-    /// test i
-    int i = 0;
+    std::cout << "Total " << v_tty_udev.size() << " ttyUdevInfos have been found." << std::endl;
     for(auto& v : v_tty_udev) {
-        std::cout << "\tis_conneted: " << std::boolalpha << v.is_connected_now << std::endl;
-        std::cout << "\tvendor_id: " << v.vendor << std::endl;
-        std::cout << "\tproduct_id: " << v.product << std::endl;
-        std::cout << "------------\n";
+        /// ttyUdevInfo 새로 shared_ptr로 생성.
+        if(!this->ttyUdevInfo) {
+            // std::cout << "shared ptr ttyUdevInfo not initialized yet.\n";
+            this->ttyUdevInfo = std::make_shared<TtyUdevInfo>(v);
+        } else {
+            this->ttyUdevInfo.reset();
+            this->ttyUdevInfo = std::make_shared<TtyUdevInfo>(v);
+        }
+        // first, print
+        std::cout << "shared_ptr: ttyUdevInfo\n";
+        std::cout << "\tis_conneted: " << std::boolalpha << this->ttyUdevInfo->is_connected_now << std::endl;
+        std::cout << "\tcurrent tty device num: " << this->ttyUdevInfo->tty_number << std::endl;
+        std::cout << "\tkernel_id: " << this->ttyUdevInfo->kernel << std::endl;
+        std::cout << "\tvendor_id: " << this->ttyUdevInfo->vendor_id << std::endl;
+        std::cout << "\tproduct_id: " << this->ttyUdevInfo->product << std::endl;
+        std::cout << "\tvendor: " << this->ttyUdevInfo->vendor << std::endl;
+        std::cout << "\tmodel: " << this->ttyUdevInfo->model << std::endl;
+        std::cout << "------------------------\n";
 
-        /// TEST 한번만
-        if(i++ == 0) {
-            if(!this->ttyUdevInfo) {
-               std::cout << "shared ptr ttyUdevInfo not initialized yet.\n";
-                this->ttyUdevInfo = std::make_shared<TtyUdevInfo>(v);
-            } else {
-                this->ttyUdevInfo.reset();
-                this->ttyUdevInfo = std::make_shared<TtyUdevInfo>(v);
+        std::string str_input = this->inputList("add");
+        if(str_input.empty()) {
+            return 1;
+        }
+        int input_num;
+        try {
+            input_num = std::stoi(str_input);
+
+        } catch(const std::exception& e) {
+            std::cerr << "Exception error: " << e.what() << std::endl;
+            return 1;
+        }
+        ///FYI: for warning
+        if(this->ptrUdevMaker->getSerialWarn(this->ttyUdevInfo) ) {
+            std::cerr << "[warn]serial info not found. Please change 'use_serial' to false in the config.lua" << std::endl;
+            std::cerr << "[warn]device may not be found." << std::endl;
+        }
+        ///TODO: 시리얼 정보 없을 경우 커널 정보로 넣어주기
+        this->ptrUdevMaker->setSymlink(input_num, this->ttyUdevInfo);
+
+        if(this->ptrUdevMaker->getIsPolicyKitNeeded()) {   
+            int res = this->ptrUdevMaker->createUdevRuleFileWithFork(this->ttyUdevInfo);
+            if(res == 0) {
+                std::vector<std::string> cmd_result_data;
+                std::string cmd = "udevadm control --reload-rules; udevadm trigger";
+                this->mUsbInfoConfirmer.executeCmd(cmd_result_data, cmd, ResultType::EXECUTE_ONLY);
+                return 0;
             }
-            std::cout << "After init shared_ptr: ttyUdevInfo\n";
-            std::cout << "\tis_conneted: " << std::boolalpha << this->ttyUdevInfo->is_connected_now << std::endl;
-            std::cout << "\tkernel_id: " << this->ttyUdevInfo->kernel << std::endl;
-            std::cout << "\tvendor_id: " << this->ttyUdevInfo->vendor << std::endl;
-            std::cout << "\tproduct_id: " << this->ttyUdevInfo->product << std::endl;
-            std::cout << "------------\n";
+            return res;
 
-            std::string str_input = this->inputList("add");
-            if(str_input.empty()) {
-                return 1;
-            }
-            int input_num;
-            try {
-                input_num = std::stoi(str_input);
-
-            } catch(const std::exception& e) {
-                std::cerr << "Exception error: " << e.what() << std::endl;
-                return 1;
-            }
-            ///FYI: for warning
-            if(this->ptrUdevMaker->getSerialWarn(this->ttyUdevInfo) ) {
-                std::cerr << "[warn]serial info not found. Please change 'use_serial' to false in the config.lua" << std::endl;
-                std::cerr << "[warn]device may not be found." << std::endl;
-            }
-
-            this->ptrUdevMaker->setSymlink(input_num, this->ttyUdevInfo);
-
-            if(this->ptrUdevMaker->getIsPolicyKitNeeded()) {   
-                int res = this->ptrUdevMaker->createUdevRuleFileWithFork(this->ttyUdevInfo);
-                if(res == 0) {
-                    std::vector<std::string> cmd_result_data;
-                    std::string cmd = "udevadm control --reload-rules; udevadm trigger";
-                    this->mUsbInfoConfirmer.executeCmd(cmd_result_data, cmd, ResultType::EXECUTE_ONLY);
-                    return 0;
-                }
-                return res;
-
-            } else {
-                // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
-                return this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
+        } else {
+            // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
+            // return this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
+            int res = this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
+            if(res == 0) {
+                /// TODO: 성공했을 경우 updateMapCheckList 어떻게 처리할 지 생각해보기
+                this->mUsbInfoConfirmer.updateMapCheckList(product_category_name, 0);
             }
         }
-        
-    }
 
+    } // For loop ends here
 
-    
     return 0;
 }
 

@@ -58,13 +58,11 @@ bool LuaConfig::initialze(const std::string& config_name, std::string override_p
         std::cout << "use_kernel is " << std::boolalpha << LuaConfig::use_kernel << std::endl;
         std::cout << "use_serial is " << std::boolalpha << LuaConfig::use_serial << std::endl;
         std::cout << "timeout_sec is " << LuaConfig::timeout_sec << std::endl;
-        ///vendor info
-        std::cout << "vendor_db1 is " << LuaConfig::luaParam.vendor_db1 << std::endl;
-        std::cout << "vendor_db2 is " << LuaConfig::luaParam.vendor_db2 << std::endl;
-        std::cout << "vendor_db3 is " << LuaConfig::luaParam.vendor_db3 << std::endl;
-        std::cout << "vendor_db4 is " << LuaConfig::luaParam.vendor_db4 << std::endl;
-        std::cout << "vendor_db5 is " << LuaConfig::luaParam.vendor_db5 << std::endl;
-        std::cout << "vendor_db6 is " << LuaConfig::luaParam.vendor_db6 << std::endl;
+        ///product category TODO: print
+        for(auto& pc : LuaConfig::luaParam.v_product_category) {
+            std::cout << "vendor is " << pc.vendor << std::endl;
+            std::cout << "model is " << pc.model << std::endl;
+        }
         std::cout << "------------------------\n";
     }
 
@@ -80,13 +78,14 @@ void LuaConfig::createLuaFile(std::ofstream& creatFile) {
     use_kernel = true,
     use_serial = true,
     timeout_sec = 30,
-    -- vendor info
-    vendor_db1 = "sllidar",
-    vendor_db2 = "coin",
-    vendor_db3 = "esp-mini",
-    vendor_db4 = "esp",
-    vendor_db5 = "amr",
-    vendor_db6 = "etc"
+    
+    product_category = {
+        { vendor = "1", model = "hello"},
+        { vendor = "2", model = "new"},
+        { vendor = "3", model = "world"},
+        { vendor = "4", model = "good"},
+        { vendor = "5", model = "bye"}
+    }
 })");
     creatFile << context;
 }
@@ -126,36 +125,42 @@ bool LuaConfig::loadLuaData(const char* table_name) {
     }
     lua_pop(LuaConfig::s_L, 1);
 
-    for(int i=1; i<7; ++i) {
-        std::string vendor_db = "vendor_db";
-        vendor_db+= std::to_string(i);
-        lua_pushstring(LuaConfig::s_L, vendor_db.c_str());
-        lua_gettable(LuaConfig::s_L, -2); // Get MyParm[tableName]
-        if(lua_tostring(LuaConfig::s_L, -1)) {
-            switch (i) {
-            case 1 :
-                LuaConfig::luaParam.vendor_db1 = lua_tostring(LuaConfig::s_L, -1);
-                break;
-            case 2 :
-                LuaConfig::luaParam.vendor_db2 = lua_tostring(LuaConfig::s_L, -1);
-                break;
-            case 3 :
-                LuaConfig::luaParam.vendor_db3 = lua_tostring(LuaConfig::s_L, -1);
-                break;
-            case 4 :
-                LuaConfig::luaParam.vendor_db4 = lua_tostring(LuaConfig::s_L, -1);
-                break;
-            case 5 :
-                LuaConfig::luaParam.vendor_db5 = lua_tostring(LuaConfig::s_L, -1);
-                break;
-            case 6 :
-                LuaConfig::luaParam.vendor_db6 = lua_tostring(LuaConfig::s_L, -1);
-                break;
-            default:
-                break;
-            }
+    lua_getfield(LuaConfig::s_L, -1, "product_category");
+    if(!lua_istable(LuaConfig::s_L, -1)) {
+        std::cerr << "product_category is not a table." << std::endl;
+        lua_pop(LuaConfig::s_L, 1);
+        return false;
+    }
+
+    ///TODO: vector (product) 만들기
+
+    int product_count = lua_rawlen(LuaConfig::s_L, -1); /// length of an array
+    std::cout << "product_count: " << product_count << std::endl;
+    for(int i =1; i <= product_count; i++) { /// start from 1
+        ///FYI: get an array element by index
+        lua_rawgeti(LuaConfig::s_L, -1, i); /// get product
+
+        // if(lua_istable(LuaConfig::s_L, -1)) {
+        // }
+        ProductCategory pc;
+        lua_getfield(LuaConfig::s_L, -1, "vendor");
+        if(lua_isstring(LuaConfig::s_L, -1)) {
+            // std::cout << "vendor: " << lua_tostring(LuaConfig::s_L, -1) << std::endl;
+            pc.vendor = lua_tostring(LuaConfig::s_L, -1);
         }
         lua_pop(LuaConfig::s_L, 1);
+
+        lua_getfield(LuaConfig::s_L, -1, "model");
+        if(lua_isstring(LuaConfig::s_L, -1)) {
+            // std::cout << "model: " << lua_tostring(LuaConfig::s_L, -1) << std::endl;
+            pc.model = lua_tostring(LuaConfig::s_L, -1);
+        }
+        lua_pop(LuaConfig::s_L, 1);
+
+        /// pop for stacked lua_rawgeti
+        lua_pop(LuaConfig::s_L, 1);
+
+        LuaConfig::luaParam.v_product_category.push_back(pc);
     }
 
     lua_pop(LuaConfig::s_L, 1); // remove the table from the stack

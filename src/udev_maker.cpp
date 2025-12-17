@@ -260,9 +260,9 @@ void UdevMaker::makeContent(std::string& udev_str, std::shared_ptr<TtyUdevInfo> 
 
     /// static LuaConfig's variable already set.
     if(LuaConfig::use_kernel) {
-        udev_str = "SUBSYSTEM==\"tty\", KERNELS==\"" + shared_tty_udev_info->kernel + "\", ATTRS{idVendor}==\"" + shared_tty_udev_info->vendor + "\", ";
+        udev_str = "SUBSYSTEM==\"tty\", KERNELS==\"" + shared_tty_udev_info->kernel + "\", ATTRS{idVendor}==\"" + shared_tty_udev_info->vendor_id + "\", ";
     } else {
-        udev_str = "SUBSYSTEM==\"tty\", ATTRS{idVendor}==\"" + shared_tty_udev_info->vendor + "\", ";
+        udev_str = "SUBSYSTEM==\"tty\", ATTRS{idVendor}==\"" + shared_tty_udev_info->vendor_id + "\", ";
     }
 
     if(LuaConfig::use_serial) {
@@ -680,13 +680,13 @@ bool UdevMaker::inputDevInfo(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info) 
     std::cin >> shared_tty_udev_info->kernel;
     
     std::cout << "vendor id (eg. 10c4): ";
-    std::cin >> shared_tty_udev_info->vendor;
+    std::cin >> shared_tty_udev_info->vendor_id;
     
     std::cout << "product id (eg. ea60): ";
     std::cin >> shared_tty_udev_info->product;
 
     std::cout << "input kernel : " << shared_tty_udev_info->kernel << std::endl;
-    std::cout << "input vendor : " << shared_tty_udev_info->vendor << std::endl;
+    std::cout << "input vendor_id : " << shared_tty_udev_info->vendor_id << std::endl;
     std::cout << "input product : " << shared_tty_udev_info->product << std::endl;
     
     std::cout << "Are these correct? (y / n) ?";

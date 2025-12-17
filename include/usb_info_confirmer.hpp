@@ -31,11 +31,11 @@ public:
     UsbInfoConfirmer(UdevMaker* udevMaker);
     ResultData findNewDevice(const int& try_count, const Mode& mode);
     void findUsbNumber(ResultData& resultData);
-    void checkValidDevices(ResultData& resultData);
-    bool devicesExist(ResultData& resultData);
+    void checkValidDevices(int try_count, ResultData& resultData);
+    bool devicesExist(int try_count, ResultData& resultData);
     void findUdevInfosWrapper(const bool& is_acm_detected);
     std::vector<std::string> findUdevInfo(const bool& is_acm_detected);
-    std::vector<std::string> findUdevInfo(int usb_id);
+    std::vector<std::string> findUdevInfo(const std::string& tty_device);
     std::string getUsbId();
 
     void executeCmd(std::vector<std::string>& cmd_result_data, const std::string& cmd_str, int process_result_type);
@@ -49,21 +49,24 @@ public:
     std::string getVenderId(std::string& last_message);
     std::string getModelId(std::string& last_message);
     std::string getSerialId(std::string& last_message);
-    std::string getVenderDb(std::string& last_message);
+    std::string getValueFromProductKey(std::string& last_message, const RegUdevType& reg_udev_type);
     void removeCharacter(std::string& str, char remove_char);
 
     std::string getIdsAterRegex(std::string& last_message);
     bool checkNumber(std::string& input_msg);
     
     void makeCopyUdevInfoByVendor();
-    std::optional<std::vector<TtyUdevInfo>> tryUdevMatch(const std::string& config_vendor_db);
+    std::optional<std::vector<TtyUdevInfo>> getTtyUdevInfoVec(const std::string& product_category_name);
+    void updateMapCheckList(const std::string product_category_name, int index);
     int showResult(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
     std::string getLsResult();
 
 protected:
-    using UnTtyUdevInfo = std::unordered_map<int, TtyUdevInfo>;
+    using UnTtyUdevInfo = std::unordered_map<std::string, TtyUdevInfo>;
     std::shared_ptr<UnTtyUdevInfo> sh_un_tty_udev_info;
     std::map<std::string, std::vector<TtyUdevInfo>> v_udev_by_vendor;
+
+    std::map<std::string, MapCheckList> map_check_list;
 
 private:
     UdevMaker* ptrUdevMaker = nullptr;
@@ -72,6 +75,8 @@ private:
     std::string m_udev_base_cmd = "udevadm info /dev/tty";
     std::string m_usb_num_str = "-1";
     std::string ls_rule_result;
+
+    bool is_map_created = false;
 };
 
 #endif //USB_INFO_CONFIRMER_HPP

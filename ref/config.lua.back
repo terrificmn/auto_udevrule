@@ -9,4 +9,13 @@ PARAM = {
     vendor_db4 = "esp",
     vendor_db5 = "amr",
     vendor_db6 = "etc"
+
+    product_category = {
+        { vendor = "1", model = "hello"},
+        { vendor = "2", model = "new"},
+        { vendor = "3", model = "world"},
+        { vendor = "4", model = "good"},
+        { vendor = "5", model = "bye"}
+    }
 }
+

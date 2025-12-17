@@ -19,19 +19,32 @@ enum Type {
     READ, WRITE, DELETE
 };
 
+enum RegUdevType {
+    VENDOR_DB, VENDOR, MODEL
+};
+
+enum MapStatus {
+    FIRST_INDEX_MATCH, SWAP_INDEX, MAP_FAILURE, MAP_OK, MAP_DEFAULT
+};
 
 struct TtyUdevInfo {
     std::string kernel;
-    std::string vendor; 
+    std::string vendor_id; 
     std::string product;
     std::string serial;
     std::string symlink_name;
-    std::string model_db;
-    std::string vendor_db;
+    int tty_number;
+    /// 제품 추정 관련 elements
+    std::string vendor;
+    std::string model;
     bool is_connected_now;
-    /// MODEL_FROM_DATABASE=FT232 Serial (UART) IC
-    /// VENDOR_FROM_DATABASE=Future Technology Devices International, Ltd
-    /// ID_USB_DRIVER=ch341
+};
+
+struct MapCheckList {
+    int size;
+    std::vector<int> original_index;
+    std::vector<int> symlink_index;
+    MapStatus map_status = MapStatus::MAP_DEFAULT;
 };
 
 struct ResultData {
@@ -41,16 +54,16 @@ struct ResultData {
     int found_device_num = -1;
 };
 
+struct ProductCategory {
+    std::string vendor;
+    std::string model;
+};
+
 struct LuaParam {
     bool use_kernel;
     bool use_serial;
     double timeout_sec;
-    std::string vendor_db1;
-    std::string vendor_db2;
-    std::string vendor_db3;
-    std::string vendor_db4;
-    std::string vendor_db5;
-    std::string vendor_db6;
+    std::vector<ProductCategory> v_product_category;
 };
 
 #endif // DEVICE_ENUM_HPP
