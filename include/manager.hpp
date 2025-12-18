@@ -13,13 +13,13 @@ public:
     void execute();
     
     std::string inputList(const std::string& str_print);
+    std::string inputProductCategory();
     bool singleMode();
     bool allDetectMode();
     bool detectUsb();
     bool detectUsbs();
-    void proceedByVendor();
     int makeUdevRule(const std::string& input_str);
-    int makeUdevRuleByProductCategory(const std::string product_category_name);
+    int makeUdevRuleByProductCategory();
     
     bool inputMode();
     void inputSymlinkInManualMode();

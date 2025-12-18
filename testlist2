@@ -92,47 +92,8 @@ E: CURRENT_TAGS=:systemd:
 
 
 
-amrbd degug
-P: /devices/pci0000:00/0000:00:14.0/usb3/3-3/3-3.1/3-3.1.1/3-3.1.1:1.0/tty/ttyACM0
-N: ttyACM0
-L: 0
-S: serial/by-id/usb-Espressif_USB_JTAG_serial_debug_unit_70:04:1D:30:4B:0C-if00
-S: ttyScale1
-S: serial/by-path/pci-0000:00:14.0-usb-0:3.1.1:1.0
-E: DEVPATH=/devices/pci0000:00/0000:00:14.0/usb3/3-3/3-3.1/3-3.1.1/3-3.1.1:1.0/tty/ttyACM0
-E: DEVNAME=/dev/ttyACM0
-E: MAJOR=166
-E: MINOR=0
-E: SUBSYSTEM=tty
-E: USEC_INITIALIZED=8286585
-E: ID_BUS=usb
-E: ID_VENDOR_ID=303a
-E: ID_MODEL_ID=1001
-E: ID_PCI_CLASS_FROM_DATABASE=Serial bus controller
-E: ID_PCI_SUBCLASS_FROM_DATABASE=USB controller
-E: ID_PCI_INTERFACE_FROM_DATABASE=XHCI
-E: ID_VENDOR_FROM_DATABASE=Intel Corporation
-E: ID_AUTOSUSPEND=1
-E: ID_MODEL_FROM_DATABASE=Tiger Lake-LP USB 3.2 Gen 2x1 xHCI Host Controller
-E: ID_VENDOR=Espressif
-E: ID_VENDOR_ENC=Espressif
-E: ID_MODEL=USB_JTAG_serial_debug_unit
-E: ID_MODEL_ENC=USB\x20JTAG\x2fserial\x20debug\x20unit
-E: ID_REVISION=0101
-E: ID_SERIAL=Espressif_USB_JTAG_serial_debug_unit_70:04:1D:30:4B:0C
-E: ID_SERIAL_SHORT=70:04:1D:30:4B:0C
-E: ID_TYPE=generic
-E: ID_USB_INTERFACES=:020200:0a0200:ffff01:
-E: ID_USB_INTERFACE_NUM=00
-E: ID_USB_DRIVER=cdc_acm
-E: ID_USB_CLASS_FROM_DATABASE=Miscellaneous Device
-E: ID_USB_PROTOCOL_FROM_DATABASE=Interface Association
-E: ID_PATH=pci-0000:00:14.0-usb-0:3.1.1:1.0
-E: ID_PATH_TAG=pci-0000_00_14_0-usb-0_3_1_1_1_0
-E: ID_MM_CANDIDATE=1
-E: DEVLINKS=/dev/serial/by-id/usb-Espressif_USB_JTAG_serial_debug_unit_70:04:1D:30:4B:0C-if00 /dev/ttyScale1 /dev/serial/by-path/pci-0000:00:14.0-usb-0:3.1.1:1.0
-E: TAGS=:systemd:
-E: CURRENT_TAGS=:systemd:
+amrbd degug : 틀린 정보일 수 있음 
+---다시 확인 필요
 
 
 

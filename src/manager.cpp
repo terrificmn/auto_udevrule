@@ -53,6 +53,34 @@ std::string Manager::inputList(const std::string& str_print) {
     return str_input;
 }
 
+std::string Manager::inputProductCategory() {
+    std::string str_input;
+
+    std::cout << "== Please choose the product category." << std::endl;
+    int pc_size = LuaConfig::luaParam.v_product_category.size();
+    std::string pc_str = "product_category_";
+    for(int i=0; i<pc_size; ++i) {
+        std::cout << i+1 << " : " << pc_str << i+1 << std::endl; 
+    }
+    std::cin >> str_input;
+
+    int input_num;
+    try {
+        input_num = stoi(str_input);
+    } catch(const std::exception &e) {
+        std::cerr << "Exception error: " << e.what() << ", use only number." << std::endl;
+        return "";
+    }
+
+    if(pc_size < input_num) {
+        std::cerr << "input number exceeded." << std::endl;
+        return std::string();
+    }
+
+    pc_str.append(str_input);
+    return pc_str;
+}
+
 bool Manager::singleMode() {
     /// give options to the user
     std::string str_input = this->inputList("detect");
@@ -120,16 +148,24 @@ bool Manager::allDetectMode() {
 
     ///2. 그룹별로 진행
     // 유저 반응에 따라 
-    // -->startThread();
+    std::cout << "\n\nTEST DUMMY INFO" << std::endl;
     while(true) {
-        std::string input;
-        std::cout << "Which group do you want to proceed?" << std::endl;
-        std::cin >> input;
+        /// 1. 새로 만들어진 map을 통해서 진행 (product_category (vendor or model 정보)), 첫 시도만 만듬
+        this->mUsbInfoConfirmer.makeCopyUdevInfoByVendor();
 
-        this->proceedByVendor();
+        /// 2. 원하는 vendor db 로 순차적으로 진행
+        // makeCopyUdevInfoByVendor() 의 마지막 프린트 참고
 
+        /// 기존 - 시리얼 관련 워닝 메세지 프린트
+        // / 기존 - makeUdevRule 실행    
+        // /// make a file under /etc/udev/... 
+        int result = this->makeUdevRuleByProductCategory();
+        if(result != 0) {
+            std::cerr << "\n== Failed to write the udev rule. ==\n\n";
+            return false;
+        }
+        std::cout << "\n== Copy complete!! ==\n\n";
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-        std::cout << "loop\n";
     }
 
     return false;
@@ -295,26 +331,6 @@ bool Manager::detectUsbs() {
     return true;
 }
 
-void Manager::proceedByVendor() {
-    /// 1. 새로 만들어진 map을 통해서 진행 (VENDOR_FROM_DATABASE), 첫 시도만 만듬
-    this->mUsbInfoConfirmer.makeCopyUdevInfoByVendor();
-
-    /// 2. 원하는 vendor db 로 순차적으로 진행
-    // makeCopyUdevInfoByVendor() 의 마지막 프린트 참고
-
-    /// 기존 - 시리얼 관련 워닝 메세지 프린트
-    // / 기존 - makeUdevRule 실행    
-    // /// make a file under /etc/udev/... 
-    int result = this->makeUdevRuleByProductCategory("product_category_0");
-    // if(result != 0) {
-    //     std::cerr << "\n== Failed to write the udev rule. ==\n\n";
-    //     return false;
-    // }
-    // ///DEBUG
-    // std::cout << "\n== Copy complete!! ==\n\n";
-
-
-}
 
 /// @brief a wrapper function for createUdevruleFile()
 /// @param input_str 
@@ -339,14 +355,21 @@ int Manager::makeUdevRule(const std::string& input_str) {
     }
 }
 
-int Manager::makeUdevRuleByProductCategory(const std::string product_category_name) {
+int Manager::makeUdevRuleByProductCategory() {
+    std::string product_category_name = this->inputProductCategory();
+    if(product_category_name.empty()) {
+        return 1;
+    }
+
     auto opt = this->mUsbInfoConfirmer.getTtyUdevInfoVec(product_category_name);
     if(!opt) {
+        std::cout << "Not found by " << product_category_name << std::endl;
         return 1;
     }
 
     std::vector<TtyUdevInfo>& v_tty_udev = opt.value();
-    std::cout << "Total " << v_tty_udev.size() << " ttyUdevInfos have been found." << std::endl;
+    std::cout << "Total ** " << v_tty_udev.size() << " ** ttyUdevInfos have been found." << std::endl;
+    int i =0;
     for(auto& v : v_tty_udev) {
         /// ttyUdevInfo 새로 shared_ptr로 생성.
         if(!this->ttyUdevInfo) {
@@ -357,7 +380,8 @@ int Manager::makeUdevRuleByProductCategory(const std::string product_category_na
             this->ttyUdevInfo = std::make_shared<TtyUdevInfo>(v);
         }
         // first, print
-        std::cout << "shared_ptr: ttyUdevInfo\n";
+
+        std::cout << "\n[ " << i++ << " ] shared_ptr: ttyUdevInfo\n";
         std::cout << "\tis_conneted: " << std::boolalpha << this->ttyUdevInfo->is_connected_now << std::endl;
         std::cout << "\tcurrent tty device num: " << this->ttyUdevInfo->tty_number << std::endl;
         std::cout << "\tkernel_id: " << this->ttyUdevInfo->kernel << std::endl;
@@ -405,11 +429,11 @@ int Manager::makeUdevRuleByProductCategory(const std::string product_category_na
                 /// TODO: 성공했을 경우 updateMapCheckList 어떻게 처리할 지 생각해보기
                 this->mUsbInfoConfirmer.updateMapCheckList(product_category_name, 0);
             }
+            return res;
         }
-
     } // For loop ends here
 
-    return 0;
+    return 1;
 }
 
 bool Manager::inputMode() {

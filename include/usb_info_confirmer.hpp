@@ -56,6 +56,7 @@ public:
     bool checkNumber(std::string& input_msg);
     
     void makeCopyUdevInfoByVendor();
+    void addDummy(const std::string& product_category);
     std::optional<std::vector<TtyUdevInfo>> getTtyUdevInfoVec(const std::string& product_category_name);
     void updateMapCheckList(const std::string product_category_name, int index);
     int showResult(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
@@ -64,7 +65,7 @@ public:
 protected:
     using UnTtyUdevInfo = std::unordered_map<std::string, TtyUdevInfo>;
     std::shared_ptr<UnTtyUdevInfo> sh_un_tty_udev_info;
-    std::map<std::string, std::vector<TtyUdevInfo>> v_udev_by_vendor;
+    std::map<std::string, std::vector<TtyUdevInfo>> v_udev_by_pc;
 
     std::map<std::string, MapCheckList> map_check_list;
 

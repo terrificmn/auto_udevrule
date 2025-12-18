@@ -1,0 +1,212 @@
+amrboard
+P: /devices/pci0000:00/0000:00:08.1/0000:65:00.3/usb1/1-3/1-3:1.0/tty/ttyACM0
+N: ttyACM0
+L: 0
+S: ttyAmrbd
+S: serial/by-path/pci-0000:65:00.3-usb-0:3:1.0
+S: serial/by-id/usb-ROBOTIS_OpenCR_Virtual_ComPort_in_FS_Mode_FFFFFFFEFFFF-if00
+E: DEVPATH=/devices/pci0000:00/0000:00:08.1/0000:65:00.3/usb1/1-3/1-3:1.0/tty/ttyACM0
+E: DEVNAME=/dev/ttyACM0
+E: MAJOR=166
+E: MINOR=0
+E: SUBSYSTEM=tty
+E: USEC_INITIALIZED=3959495
+E: ID_BUS=usb
+E: ID_VENDOR_ID=0483
+E: ID_MODEL_ID=5740
+E: ID_PCI_CLASS_FROM_DATABASE=Serial bus controller
+E: ID_PCI_SUBCLASS_FROM_DATABASE=USB controller
+E: ID_PCI_INTERFACE_FROM_DATABASE=XHCI
+E: ID_VENDOR_FROM_DATABASE=STMicroelectronics
+E: ID_VENDOR=ROBOTIS
+E: ID_VENDOR_ENC=ROBOTIS
+E: ID_MODEL=OpenCR_Virtual_ComPort_in_FS_Mode
+E: ID_MODEL_ENC=OpenCR\x20Virtual\x20ComPort\x20in\x20FS\x20Mode
+E: ID_REVISION=0200
+E: ID_SERIAL=ROBOTIS_OpenCR_Virtual_ComPort_in_FS_Mode_FFFFFFFEFFFF
+E: ID_SERIAL_SHORT=FFFFFFFEFFFF
+E: ID_TYPE=generic
+E: ID_USB_INTERFACES=:020201:0a0000:
+E: ID_USB_INTERFACE_NUM=00
+E: ID_USB_DRIVER=cdc_acm
+E: ID_USB_CLASS_FROM_DATABASE=Communications
+E: ID_MODEL_FROM_DATABASE=Virtual COM Port
+E: ID_PATH=pci-0000:65:00.3-usb-0:3:1.0
+E: ID_PATH_TAG=pci-0000_65_00_3-usb-0_3_1_0
+E: ID_MM_CANDIDATE=1
+E: DEVLINKS=/dev/ttyAmrbd /dev/serial/by-path/pci-0000:65:00.3-usb-0:3:1.0 /dev/serial/by-id/usb-ROBOTIS_OpenCR_Virtual_ComPort_in_FS_Mode_FFFFFFFEFFFF-if00
+E: TAGS=:systemd:
+E: CURRENT_TAGS=:systemd:
+
+
+
+/dev/ttyFrontAuxLidar front coin 
+amrlabs@robot3:~$ udevadm info /dev/ttyUSB0
+P: /devices/pci0000:00/0000:00:08.1/0000:65:00.3/usb1/1-1/1-1.1/1-1.1:1.0/ttyUSB0/tty/ttyUSB0
+N: ttyUSB0
+L: 0
+S: serial/by-path/pci-0000:65:00.3-usb-0:1.1:1.0-port0
+S: serial/by-id/usb-1a86_USB_Serial-if00-port0
+S: ttyFrontAuxLidar
+E: DEVPATH=/devices/pci0000:00/0000:00:08.1/0000:65:00.3/usb1/1-1/1-1.1/1-1.1:1.0/ttyUSB0/tty/ttyUSB0
+E: DEVNAME=/dev/ttyUSB0
+E: MAJOR=188
+E: MINOR=0
+E: SUBSYSTEM=tty
+E: USEC_INITIALIZED=5185624
+E: ID_BUS=usb
+E: ID_VENDOR_ID=1a86
+E: ID_MODEL_ID=7523
+E: ID_PCI_CLASS_FROM_DATABASE=Serial bus controller
+E: ID_PCI_SUBCLASS_FROM_DATABASE=USB controller
+E: ID_PCI_INTERFACE_FROM_DATABASE=XHCI
+E: ID_VENDOR_FROM_DATABASE=QinHeng Electronics
+E: ID_VENDOR=1a86
+E: ID_VENDOR_ENC=1a86
+E: ID_MODEL=USB_Serial
+E: ID_MODEL_ENC=USB\x20Serial
+E: ID_REVISION=0264
+E: ID_SERIAL=1a86_USB_Serial
+E: ID_TYPE=generic
+E: ID_USB_INTERFACES=:ff0102:
+E: ID_USB_INTERFACE_NUM=00
+E: ID_USB_DRIVER=ch341
+E: ID_USB_CLASS_FROM_DATABASE=Vendor Specific Class
+E: ID_MODEL_FROM_DATABASE=CH340 serial converter
+E: ID_PATH=pci-0000:65:00.3-usb-0:1.1:1.0
+E: ID_PATH_TAG=pci-0000_65_00_3-usb-0_1_1_1_0
+E: ID_MM_CANDIDATE=1
+E: DEVLINKS=/dev/serial/by-path/pci-0000:65:00.3-usb-0:1.1:1.0-port0 /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0 /dev/ttyFrontAuxLidar
+E: TAGS=:systemd:
+E: CURRENT_TAGS=:systemd:
+
+
+/dev/ttyRearAuxLidar coin 2 rear
+vadm info /dev/ttyUSB3
+P: /devices/pci0000:00/0000:00:08.1/0000:65:00.3/usb1/1-1/1-1.4/1-1.4.1/1-1.4.1:1.0/ttyUSB3/tty/ttyUSB3
+N: ttyUSB3
+L: 0
+S: serial/by-id/usb-1a86_USB_Serial-if00-port0
+S: serial/by-path/pci-0000:65:00.3-usb-0:1.4.1:1.0-port0
+S: ttyRearAuxLidar
+E: DEVPATH=/devices/pci0000:00/0000:00:08.1/0000:65:00.3/usb1/1-1/1-1.4/1-1.4.1/1-1.4.1:1.0/ttyUSB3/tty/ttyUSB3
+E: DEVNAME=/dev/ttyUSB3
+E: MAJOR=188
+E: MINOR=3
+E: SUBSYSTEM=tty
+E: USEC_INITIALIZED=6621615
+E: ID_BUS=usb
+E: ID_VENDOR_ID=1a86
+E: ID_MODEL_ID=7523
+E: ID_PCI_CLASS_FROM_DATABASE=Serial bus controller
+E: ID_PCI_SUBCLASS_FROM_DATABASE=USB controller
+E: ID_PCI_INTERFACE_FROM_DATABASE=XHCI
+E: ID_VENDOR_FROM_DATABASE=QinHeng Electronics
+E: ID_VENDOR=1a86
+E: ID_VENDOR_ENC=1a86
+E: ID_MODEL=USB_Serial
+E: ID_MODEL_ENC=USB\x20Serial
+E: ID_REVISION=0264
+E: ID_SERIAL=1a86_USB_Serial
+E: ID_TYPE=generic
+E: ID_USB_INTERFACES=:ff0102:
+E: ID_USB_INTERFACE_NUM=00
+E: ID_USB_DRIVER=ch341
+E: ID_USB_CLASS_FROM_DATABASE=Vendor Specific Class
+E: ID_MODEL_FROM_DATABASE=CH340 serial converter
+E: ID_PATH=pci-0000:65:00.3-usb-0:1.4.1:1.0
+E: ID_PATH_TAG=pci-0000_65_00_3-usb-0_1_4_1_1_0
+E: ID_MM_CANDIDATE=1
+E: DEVLINKS=/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0 /dev/serial/by-path/pci-0000:65:00.3-usb-0:1.4.1:1.0-port0 /dev/ttyRearAuxLidar
+E: TAGS=:systemd:
+E: CURRENT_TAGS=:systemd:
+
+
+front lidar
+P: /devices/pci0000:00/0000:00:08.1/0000:65:00.3/usb1/1-1/1-1.3/1-1.3:1.0/ttyUSB2/tty/ttyUSB2
+N: ttyUSB2
+L: 0
+S: serial/by-path/pci-0000:65:00.3-usb-0:1.3:1.0-port0
+S: ttyFrontLidar
+S: serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_967e488bf463ef119f86e1a9c169b110-if00-port0
+E: DEVPATH=/devices/pci0000:00/0000:00:08.1/0000:65:00.3/usb1/1-1/1-1.3/1-1.3:1.0/ttyUSB2/tty/ttyUSB2
+E: DEVNAME=/dev/ttyUSB2
+E: MAJOR=188
+E: MINOR=2
+E: SUBSYSTEM=tty
+E: USEC_INITIALIZED=5180139
+E: ID_BUS=usb
+E: ID_VENDOR_ID=10c4
+E: ID_MODEL_ID=ea60
+E: ID_PCI_CLASS_FROM_DATABASE=Serial bus controller
+E: ID_PCI_SUBCLASS_FROM_DATABASE=USB controller
+E: ID_PCI_INTERFACE_FROM_DATABASE=XHCI
+E: ID_VENDOR_FROM_DATABASE=Silicon Labs
+E: ID_VENDOR=Silicon_Labs
+E: ID_VENDOR_ENC=Silicon\x20Labs
+E: ID_MODEL=CP2102N_USB_to_UART_Bridge_Controller
+E: ID_MODEL_ENC=CP2102N\x20USB\x20to\x20UART\x20Bridge\x20Controller
+E: ID_REVISION=0100
+E: ID_SERIAL=Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_967e488bf463ef119f86e1a9c169b110
+E: ID_SERIAL_SHORT=967e488bf463ef119f86e1a9c169b110
+E: ID_TYPE=generic
+E: ID_USB_INTERFACES=:ff0000:
+E: ID_USB_INTERFACE_NUM=00
+E: ID_USB_DRIVER=cp210x
+E: ID_MODEL_FROM_DATABASE=CP210x UART Bridge
+E: ID_PATH=pci-0000:65:00.3-usb-0:1.3:1.0
+E: ID_PATH_TAG=pci-0000_65_00_3-usb-0_1_3_1_0
+E: ID_MM_CANDIDATE=1
+E: DEVLINKS=/dev/serial/by-path/pci-0000:65:00.3-usb-0:1.3:1.0-port0 /dev/ttyFrontLidar /dev/serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_967e488bf463ef119f86e1a9c169b110-if00-port0
+E: TAGS=:systemd:
+E: CURRENT_TAGS=:systemd:
+
+
+
+rear lidar
+P: /devices/pci0000:00/0000:00:08.1/0000:65:00.3/usb1/1-1/1-1.2/1-1.2:1.0/ttyUSB1/tty/ttyUSB1
+N: ttyUSB1
+L: 0
+S: serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_88001e210983eb11bcb1cc7f9693f7bc-if00-port0
+S: ttyRearLidar
+S: serial/by-path/pci-0000:65:00.3-usb-0:1.2:1.0-port0
+E: DEVPATH=/devices/pci0000:00/0000:00:08.1/0000:65:00.3/usb1/1-1/1-1.2/1-1.2:1.0/ttyUSB1/tty/ttyUSB1
+E: DEVNAME=/dev/ttyUSB1
+E: MAJOR=188
+E: MINOR=1
+E: SUBSYSTEM=tty
+E: USEC_INITIALIZED=5183793
+E: ID_BUS=usb
+E: ID_VENDOR_ID=10c4
+E: ID_MODEL_ID=ea60
+E: ID_PCI_CLASS_FROM_DATABASE=Serial bus controller
+E: ID_PCI_SUBCLASS_FROM_DATABASE=USB controller
+E: ID_PCI_INTERFACE_FROM_DATABASE=XHCI
+E: ID_VENDOR_FROM_DATABASE=Silicon Labs
+E: ID_VENDOR=Silicon_Labs
+E: ID_VENDOR_ENC=Silicon\x20Labs
+E: ID_MODEL=CP2102N_USB_to_UART_Bridge_Controller
+E: ID_MODEL_ENC=CP2102N\x20USB\x20to\x20UART\x20Bridge\x20Controller
+E: ID_REVISION=0100
+E: ID_SERIAL=Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_88001e210983eb11bcb1cc7f9693f7bc
+E: ID_SERIAL_SHORT=88001e210983eb11bcb1cc7f9693f7bc
+E: ID_TYPE=generic
+E: ID_USB_INTERFACES=:ff0000:
+E: ID_USB_INTERFACE_NUM=00
+E: ID_USB_DRIVER=cp210x
+E: ID_MODEL_FROM_DATABASE=CP210x UART Bridge
+E: ID_PATH=pci-0000:65:00.3-usb-0:1.2:1.0
+E: ID_PATH_TAG=pci-0000_65_00_3-usb-0_1_2_1_0
+E: ID_MM_CANDIDATE=1
+E: DEVLINKS=/dev/serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_88001e210983eb11bcb1cc7f9693f7bc-if00-port0 /dev/ttyRearLidar /dev/serial/by-path/pci-0000:65:00.3-usb-0:1.2:1.0-port0
+E: TAGS=:systemd:
+E: CURRENT_TAGS=:systemd:
+
+
+scale1,2,3 not connected but 
+They have , ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", 
+
+
+tfluna
+ ATTRS{serial}=="B8:F8:62:B4:31:0C", ATTRS{idVendor}=="303a", ATTRS{idProduct}=="1001"
+

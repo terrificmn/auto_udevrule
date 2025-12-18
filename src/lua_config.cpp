@@ -59,9 +59,10 @@ bool LuaConfig::initialze(const std::string& config_name, std::string override_p
         std::cout << "use_serial is " << std::boolalpha << LuaConfig::use_serial << std::endl;
         std::cout << "timeout_sec is " << LuaConfig::timeout_sec << std::endl;
         ///product category TODO: print
+        int i=1;
         for(auto& pc : LuaConfig::luaParam.v_product_category) {
-            std::cout << "vendor is " << pc.vendor << std::endl;
-            std::cout << "model is " << pc.model << std::endl;
+            std::cout << "[" << i++ << "]" << " vendor: " << pc.vendor;
+            std::cout << ", model: " << pc.model << std::endl;
         }
         std::cout << "------------------------\n";
     }
