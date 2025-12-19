@@ -61,7 +61,7 @@ bool LuaConfig::initialze(const std::string& config_name, std::string override_p
         ///product category TODO: print
         int i=1;
         for(auto& pc : LuaConfig::luaParam.v_product_category) {
-            std::cout << "[" << i++ << "]" << " vendor: " << pc.vendor;
+            std::cout << "[" << i++ << ", "  << pc.alias  << "]" << " vendor: " << pc.vendor;
             std::cout << ", model: " << pc.model << std::endl;
         }
         std::cout << "------------------------\n";
@@ -81,11 +81,11 @@ void LuaConfig::createLuaFile(std::ofstream& creatFile) {
     timeout_sec = 30,
     
     product_category = {
-        { vendor = "1", model = "hello"},
-        { vendor = "2", model = "new"},
-        { vendor = "3", model = "world"},
-        { vendor = "4", model = "good"},
-        { vendor = "5", model = "bye"}
+        { vendor = "1", model = "hello", alias = "product1" },
+        { vendor = "2", model = "new", alias = "product2" },
+        { vendor = "3", model = "world", alias = "product3" },
+        { vendor = "4", model = "good", alias = "product4" },
+        { vendor = "5", model = "bye", alias = "product5" }
     }
 })");
     creatFile << context;
@@ -155,6 +155,13 @@ bool LuaConfig::loadLuaData(const char* table_name) {
         if(lua_isstring(LuaConfig::s_L, -1)) {
             // std::cout << "model: " << lua_tostring(LuaConfig::s_L, -1) << std::endl;
             pc.model = lua_tostring(LuaConfig::s_L, -1);
+        }
+        lua_pop(LuaConfig::s_L, 1);
+
+        lua_getfield(LuaConfig::s_L, -1, "alias");
+        if(lua_isstring(LuaConfig::s_L, -1)) {
+            // std::cout << "model: " << lua_tostring(LuaConfig::s_L, -1) << std::endl;
+            pc.alias = lua_tostring(LuaConfig::s_L, -1);
         }
         lua_pop(LuaConfig::s_L, 1);
 

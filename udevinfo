@@ -205,8 +205,20 @@ E: CURRENT_TAGS=:systemd:
 
 scale1,2,3 not connected but 
 They have , ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", 
+기존 1/2호기에 사용된 303a, 1001 인데, 10c4:ea60 이면 라이다와 비슷한 장치인데
+!!맞는지 다시 확인해봐야한다. 
+
+기존 방식...
+vendor는 Espressif,  model USB_JTAG_serial_debug_unit
+ID_SERIAL_SHORT=70:04:1D:31:48:6C
+ID_SERIAL_SHORT=70:04:1D:30:4C:E8
+70:04:1D:31:45:EC
+
 
 
 tfluna
- ATTRS{serial}=="B8:F8:62:B4:31:0C", ATTRS{idVendor}=="303a", ATTRS{idProduct}=="1001"
+ATTRS{serial}=="B8:F8:62:B4:31:0C", ATTRS{idVendor}=="303a", ATTRS{idProduct}=="1001"
+
+tf luna 센서는 1/2호기 같은 장치를 사용한다.  
+ID_SERIAL_SHORT=94:A9:90:99:7C:18
 

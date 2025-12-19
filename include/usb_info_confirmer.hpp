@@ -56,9 +56,13 @@ public:
     bool checkNumber(std::string& input_msg);
     
     void makeCopyUdevInfoByVendor();
-    void addDummy(const std::string& product_category);
+    void addDummy();
     std::optional<std::vector<TtyUdevInfo>> getTtyUdevInfoVec(const std::string& product_category_name);
     void updateMapCheckList(const std::string product_category_name, int index);
+    void updateStatusMapCheckList(const std::string product_category_name, MapStatus map_status);
+    MapStatus getStatusFromMapChecklist(const std::string product_category_name);
+    int getSymlinkIndexFromMapChecklist(const std::string product_category_name, int idx);
+
     int showResult(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
     std::string getLsResult();
 

@@ -43,7 +43,7 @@ struct TtyUdevInfo {
 struct MapCheckList {
     int size;
     std::vector<int> original_index;
-    std::vector<int> symlink_index;
+    std::vector<int> symlink_name_index;
     MapStatus map_status = MapStatus::MAP_DEFAULT;
 };
 
@@ -57,6 +57,7 @@ struct ResultData {
 struct ProductCategory {
     std::string vendor;
     std::string model;
+    std::string alias;
 };
 
 struct LuaParam {

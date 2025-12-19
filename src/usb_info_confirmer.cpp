@@ -756,10 +756,7 @@ void UsbInfoConfirmer::makeCopyUdevInfoByVendor() {
     ///TODO: 테스트 후 삭제
     //// 임의 테스트
     {
-        this->addDummy("product_category_0");
-        this->addDummy("product_category_1");
-        this->addDummy("product_category_2");
-        this->addDummy("product_category_3");
+        this->addDummy();
         std::cout << "Dummy data has been inserted.\n";
     }
 
@@ -770,24 +767,25 @@ void UsbInfoConfirmer::makeCopyUdevInfoByVendor() {
             std::cout << "usb " << udev.first << " skipped." << std::endl;
             continue;
         }
-        /// 일단 product_category 기준으로 그룹화 (vector)
+        /// 일단 product_category 의 alias 기준으로 그룹화 
         /// Find vendor or model
         // 1. main board
         std::string product_category = "product_category_";
+        
         if(udev.second.model.find(LuaConfig::luaParam.v_product_category.at(0).model) != std::string::npos) {
             std::cout << LuaConfig::luaParam.v_product_category.at(0).model << " model matched. " << udev.second.model << std::endl;
             ///FYI: unorder_map은 not allow to have duplicated keys , map 도 마찬가지지만, vector로 추가하는 것은 가능
-            product_category+="0";
+            std::string product_category_name = LuaConfig::luaParam.v_product_category.at(0).alias;
             ///TODO: 임의 테스트 후 테스트 후 아래 주석 해제
-            // this->v_udev_by_vendor[product_category].push_back(udev.second);
-            std::cout << "push_back as " << product_category << std::endl;
+            // this->v_udev_by_vendor[product_category_name].push_back(udev.second);
+            std::cout << "push_back as " << product_category_name << std::endl;
 
             MapCheckList map_check_list;
             map_check_list.size = this->v_udev_by_pc.size();
             for(int i=0; i<map_check_list.size; ++i) {
                 map_check_list.original_index.push_back(i);
             }
-            this->map_check_list[product_category] = map_check_list;
+            this->map_check_list[product_category_name] = map_check_list;
             ///TODO: 검증 해보기
             continue;
         } else {
@@ -796,16 +794,16 @@ void UsbInfoConfirmer::makeCopyUdevInfoByVendor() {
         // 2. main lidar
         if(udev.second.vendor.find(LuaConfig::luaParam.v_product_category.at(1).vendor) != std::string::npos) {
             std::cout << LuaConfig::luaParam.v_product_category.at(1).vendor << " vendor matched. " << udev.second.vendor << std::endl;
-            product_category+="1";
             ///FYI: unorder_map은 not allow to have duplicated keys , map 도 마찬가지지만, vector로 추가하는 것은 가능
+            std::string product_category_name = LuaConfig::luaParam.v_product_category.at(1).alias;
             ///TODO: 임의 테스트 후 테스트 후 아래 주석 해제
-            // this->v_udev_by_vendor[product_category].push_back(udev.second);
+            // this->v_udev_by_vendor[product_category_name].push_back(udev.second);
             MapCheckList map_check_list;
             map_check_list.size = this->v_udev_by_pc.size();
             for(int i=0; i<map_check_list.size; ++i) {
                 map_check_list.original_index.push_back(i);
             }
-            this->map_check_list[product_category] = map_check_list;
+            this->map_check_list[product_category_name] = map_check_list;
             continue;
         } else {
             std::cout << "Not found vendor." << std::endl;
@@ -813,34 +811,34 @@ void UsbInfoConfirmer::makeCopyUdevInfoByVendor() {
         // 3. bottom lidar (coin)
         if(udev.second.vendor.find(LuaConfig::luaParam.v_product_category.at(2).vendor) != std::string::npos) {
             std::cout << LuaConfig::luaParam.v_product_category.at(2).vendor << " vendor matched. " << udev.second.vendor << std::endl;
-            product_category+="2";
+            std::string product_category_name = LuaConfig::luaParam.v_product_category.at(2).alias;
             ///FYI: unorder_map은 not allow to have duplicated keys , map 도 마찬가지지만, vector로 추가하는 것은 가능
             ///TODO: 임의 테스트 후 테스트 후 아래 주석 해제
-            // this->v_udev_by_vendor[product_category].push_back(udev.second);
+            // this->v_udev_by_vendor[product_category_name].push_back(udev.second);
             MapCheckList map_check_list;
             map_check_list.size = this->v_udev_by_pc.size();
             for(int i=0; i<map_check_list.size; ++i) {
                 map_check_list.original_index.push_back(i);
             }
-            this->map_check_list[product_category] = map_check_list;
+            this->map_check_list[product_category_name] = map_check_list;
             continue;
         } else {
             std::cout << "Not found vendor." << std::endl;
         }
         // 4. other loadcell amrbd debug, tfluna
         if(udev.second.vendor.find(LuaConfig::luaParam.v_product_category.at(3).vendor) != std::string::npos) {
-            std::cout << LuaConfig::luaParam.v_product_category.at(2).vendor << " vendor matched. " << udev.second.vendor << std::endl;
-            product_category+="3";
+            std::cout << LuaConfig::luaParam.v_product_category.at(3).vendor << " vendor matched. " << udev.second.vendor << std::endl;
+            std::string product_category_name = LuaConfig::luaParam.v_product_category.at(3).alias;
             ///FYI: unorder_map은 not allow to have duplicated keys , map 도 마찬가지지만, vector로 추가하는 것은 가능
             ///TODO: 임의 테스트 후 테스트 후 아래 주석 해제
-            // this->v_udev_by_vendor[product_category].push_back(udev.second);
+            // this->v_udev_by_vendor[product_category_name].push_back(udev.second);
             //// 임의 테스트
             MapCheckList map_check_list;
             map_check_list.size = this->v_udev_by_pc.size();
             for(int i=0; i<map_check_list.size; ++i) {
                 map_check_list.original_index.push_back(i);
             }
-            this->map_check_list[product_category] = map_check_list;
+            this->map_check_list[product_category_name] = map_check_list;
             continue;
         } else {
             std::cout << "Not found vendor." << std::endl;
@@ -848,9 +846,9 @@ void UsbInfoConfirmer::makeCopyUdevInfoByVendor() {
         //etc .. you could try to find model or vendor
         // if(udev.second.vendor.find(LuaConfig::luaParam.v_product_category.at(4).vendor) != std::string::npos) {
         //     std::cout << LuaConfig::luaParam.v_product_category.at(4).vendor << " vendor matched. " << udev.second.vendor << std::endl;
+        //     std::string product_category_name = LuaConfig::luaParam.v_product_category.at(4).alias;
         //     ///FYI: unorder_map은 not allow to have duplicated keys , map 도 마찬가지지만, vector로 추가하는 것은 가능
-        //     this->v_udev_by_vendor[product_category+"4"].push_back(udev.second);
-        //     this->v_udev_by_vendor[product_category+"4"].push_back(udev.second); /// For test
+        //     // this->v_udev_by_vendor[product_category_name].push_back(udev.second);
         //     continue;
         // } else {
         //     std::cout << "Not found vendor." << std::endl;
@@ -873,8 +871,37 @@ std::optional<std::vector<TtyUdevInfo>> UsbInfoConfirmer::getTtyUdevInfoVec(cons
 }
 
 void UsbInfoConfirmer::updateMapCheckList(const std::string product_category_name, int index) {
-    // this->map_check_list[product_category_name].original_index
-    // this->map_check_list[product_category_name].symlink_index.at(0) = index;
+    ///TODO: 에러 처리
+    if(this->map_check_list[product_category_name].map_status == MapStatus::SWAP_INDEX) {
+        std::cout << "updateMapCheckList --> " << product_category_name << std::endl;
+        auto temp_v = this->map_check_list[product_category_name].symlink_name_index;
+        this->map_check_list[product_category_name].symlink_name_index.clear();
+        ///FYI: 거꾸로 다시 넣어주기
+        std::cout <<"\ttemp_v size: " << temp_v.size() << std::endl;
+        for(int i=temp_v.size(); i > 0; i--) {
+            this->map_check_list[product_category_name].symlink_name_index.push_back(temp_v.at(i-1));
+            std::cout << "i(" << i << "): " << temp_v.at(i-1) << std::endl;
+        }
+
+    } else {
+        this->map_check_list[product_category_name].symlink_name_index.push_back(index);
+    }
+}
+
+void UsbInfoConfirmer::updateStatusMapCheckList(const std::string product_category_name, MapStatus map_status) {
+    ///TODO: 에러 처리
+    this->map_check_list[product_category_name].map_status = map_status;
+}
+
+
+MapStatus UsbInfoConfirmer::getStatusFromMapChecklist(const std::string product_category_name) {
+    ///TODO: 에러 처리
+    return this->map_check_list[product_category_name].map_status;
+}
+
+int UsbInfoConfirmer::getSymlinkIndexFromMapChecklist(const std::string product_category_name, int idx) {
+    ///TODO: 에러 처리
+    return this->map_check_list[product_category_name].symlink_name_index.at(idx);
 }
 
 int UsbInfoConfirmer::showResult(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info) {
@@ -929,8 +956,8 @@ std::string UsbInfoConfirmer::getLsResult() {
     return this->ls_rule_result;
 }
 
-void UsbInfoConfirmer::addDummy(const std::string& product_category) {
-    if(product_category == "product_category_0") {
+void UsbInfoConfirmer::addDummy() {
+    {
         TtyUdevInfo tempTtyUdev;
         tempTtyUdev.is_connected_now = true;
         tempTtyUdev.tty_number = 0;
@@ -939,11 +966,12 @@ void UsbInfoConfirmer::addDummy(const std::string& product_category) {
         tempTtyUdev.vendor_id = "0483";
         tempTtyUdev.serial = "FFFFFFFE";
         tempTtyUdev.symlink_name = "";
-        tempTtyUdev.vendor = "ROBOTICS";
+        tempTtyUdev.vendor = "ROBOTIS";
         tempTtyUdev.model = "OpenCR_Virtual_ComPort_in_FS_Mode";
-        this->v_udev_by_pc[product_category].push_back(tempTtyUdev);
+        this->v_udev_by_pc[LuaConfig::luaParam.v_product_category.at(0).alias].push_back(tempTtyUdev);
+    }
 
-    } else if(product_category == "product_category_1") {
+    {
         TtyUdevInfo tempTtyUdev;
         tempTtyUdev.is_connected_now = true;
         tempTtyUdev.tty_number = 0;
@@ -966,10 +994,11 @@ void UsbInfoConfirmer::addDummy(const std::string& product_category) {
         tempTtyUdev2.vendor = "Silicon_Labs";
         tempTtyUdev2.model = "CP2102N_USB_to_UART_Bridge_Controller";
 
-        this->v_udev_by_pc[product_category].push_back(tempTtyUdev);
-        this->v_udev_by_pc[product_category].push_back(tempTtyUdev2);
+        this->v_udev_by_pc[LuaConfig::luaParam.v_product_category.at(1).alias].push_back(tempTtyUdev);
+        this->v_udev_by_pc[LuaConfig::luaParam.v_product_category.at(1).alias].push_back(tempTtyUdev2);
+    }
     
-    } else if(product_category == "product_category_2") {
+    {
         /// 특이사항 serial 없음
         TtyUdevInfo tempTtyUdev;
         tempTtyUdev.is_connected_now = true;
@@ -981,7 +1010,7 @@ void UsbInfoConfirmer::addDummy(const std::string& product_category) {
         tempTtyUdev.symlink_name = "";
         tempTtyUdev.vendor = "1a86";
         tempTtyUdev.model = "USB_Serial";
-
+    
         TtyUdevInfo tempTtyUdev2;
         tempTtyUdev2.is_connected_now = true;
         tempTtyUdev2.tty_number = 3;
@@ -992,11 +1021,12 @@ void UsbInfoConfirmer::addDummy(const std::string& product_category) {
         tempTtyUdev2.symlink_name = "";
         tempTtyUdev2.vendor = "1a86";
         tempTtyUdev2.model = "USB_Serial";
-
-        this->v_udev_by_pc[product_category].push_back(tempTtyUdev);
-        this->v_udev_by_pc[product_category].push_back(tempTtyUdev2);
     
-    } else if(product_category == "product_category_3") {
+        this->v_udev_by_pc[LuaConfig::luaParam.v_product_category.at(2).alias].push_back(tempTtyUdev);
+        this->v_udev_by_pc[LuaConfig::luaParam.v_product_category.at(2).alias].push_back(tempTtyUdev2);
+    }
+
+    {
         TtyUdevInfo tempTtyUdev;
         tempTtyUdev.is_connected_now = true;
         tempTtyUdev.tty_number = 1;
@@ -1007,7 +1037,7 @@ void UsbInfoConfirmer::addDummy(const std::string& product_category) {
         tempTtyUdev.symlink_name = "";
         tempTtyUdev.vendor = "Espressif";
         tempTtyUdev.model = "USB_JTAG_serial_debug_unit";
-
+    
         TtyUdevInfo tempTtyUdev2;
         tempTtyUdev2.is_connected_now = true;
         tempTtyUdev2.tty_number = 2;
@@ -1018,7 +1048,7 @@ void UsbInfoConfirmer::addDummy(const std::string& product_category) {
         tempTtyUdev2.symlink_name = "";
         tempTtyUdev2.vendor = "Espressif";
         tempTtyUdev2.model = "USB_JTAG_serial_debug_unit";
-
+    
         TtyUdevInfo tempTtyUdev3;
         tempTtyUdev3.is_connected_now = true;
         tempTtyUdev3.tty_number = 3;
@@ -1029,7 +1059,7 @@ void UsbInfoConfirmer::addDummy(const std::string& product_category) {
         tempTtyUdev3.symlink_name = "";
         tempTtyUdev3.vendor = "Espressif";
         tempTtyUdev3.model = "USB_JTAG_serial_debug_unit";
-
+    
         TtyUdevInfo tempTtyUdev4;
         tempTtyUdev4.is_connected_now = true;
         tempTtyUdev4.tty_number = 4;
@@ -1040,10 +1070,10 @@ void UsbInfoConfirmer::addDummy(const std::string& product_category) {
         tempTtyUdev4.symlink_name = "";
         tempTtyUdev4.vendor = "Espressif";
         tempTtyUdev4.model = "USB_JTAG_serial_debug_unit";
-
-        this->v_udev_by_pc[product_category].push_back(tempTtyUdev);
-        this->v_udev_by_pc[product_category].push_back(tempTtyUdev2);
-        this->v_udev_by_pc[product_category].push_back(tempTtyUdev3);
-        this->v_udev_by_pc[product_category].push_back(tempTtyUdev4);        
+    
+        this->v_udev_by_pc[LuaConfig::luaParam.v_product_category.at(3).alias].push_back(tempTtyUdev);
+        this->v_udev_by_pc[LuaConfig::luaParam.v_product_category.at(3).alias].push_back(tempTtyUdev2);
+        this->v_udev_by_pc[LuaConfig::luaParam.v_product_category.at(3).alias].push_back(tempTtyUdev3);
+        this->v_udev_by_pc[LuaConfig::luaParam.v_product_category.at(3).alias].push_back(tempTtyUdev4);        
     }
 }

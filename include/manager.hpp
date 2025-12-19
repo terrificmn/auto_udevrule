@@ -20,6 +20,8 @@ public:
     bool detectUsbs();
     int makeUdevRule(const std::string& input_str);
     int makeUdevRuleByProductCategory();
+    int swapProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::string& product_category_name);
+    void stepByStepProcess(std::vector<TtyUdevInfo>& v_tty_udev);
     
     bool inputMode();
     void inputSymlinkInManualMode();
