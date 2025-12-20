@@ -166,7 +166,6 @@ void UsbInfoConfirmer::checkValidDevices(int try_count, ResultData& resultData) 
             //     (*this->sh_un_tty_udev_info)[usb_id] = ttyUdevInfo;
             // }
         }
-
     }
 }
 
@@ -770,8 +769,6 @@ void UsbInfoConfirmer::makeCopyUdevInfoByVendor() {
         /// 일단 product_category 의 alias 기준으로 그룹화 
         /// Find vendor or model
         // 1. main board
-        std::string product_category = "product_category_";
-        
         if(udev.second.model.find(LuaConfig::luaParam.v_product_category.at(0).model) != std::string::npos) {
             std::cout << LuaConfig::luaParam.v_product_category.at(0).model << " model matched. " << udev.second.model << std::endl;
             ///FYI: unorder_map은 not allow to have duplicated keys , map 도 마찬가지지만, vector로 추가하는 것은 가능
@@ -884,6 +881,11 @@ void UsbInfoConfirmer::updateMapCheckList(const std::string product_category_nam
         }
 
     } else {
+        int size = this->map_check_list[product_category_name].symlink_name_index.size();
+        ///TODO: origianl_index 확인하기 - 0임
+        std::cout << "******symlink_name_index size: " << size << std::endl;
+        std::cout << "******origin symlink_name_index size: " << this->map_check_list[product_category_name].original_index.size() << std::endl;
+        
         this->map_check_list[product_category_name].symlink_name_index.push_back(index);
     }
 }
@@ -891,6 +893,10 @@ void UsbInfoConfirmer::updateMapCheckList(const std::string product_category_nam
 void UsbInfoConfirmer::updateStatusMapCheckList(const std::string product_category_name, MapStatus map_status) {
     ///TODO: 에러 처리
     this->map_check_list[product_category_name].map_status = map_status;
+}
+
+void UsbInfoConfirmer::clearMapCheckListSymlink(const std::string& product_category_name) {
+    this->map_check_list[product_category_name].symlink_name_index.clear();
 }
 
 

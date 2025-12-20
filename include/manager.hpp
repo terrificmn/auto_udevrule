@@ -14,6 +14,7 @@ public:
     
     std::string inputList(const std::string& str_print);
     std::string inputProductCategory();
+    bool inputConfirmNReSymlink();
     bool singleMode();
     bool allDetectMode();
     bool detectUsb();
@@ -21,7 +22,7 @@ public:
     int makeUdevRule(const std::string& input_str);
     int makeUdevRuleByProductCategory();
     int swapProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::string& product_category_name);
-    void stepByStepProcess(std::vector<TtyUdevInfo>& v_tty_udev);
+    int stepByStepProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::string& product_category_name);
     
     bool inputMode();
     void inputSymlinkInManualMode();
