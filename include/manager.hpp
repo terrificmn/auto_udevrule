@@ -14,7 +14,7 @@ public:
     
     std::string inputList(const std::string& str_print);
     std::string inputProductCategory();
-    bool inputConfirmNReSymlink();
+    bool inputReMakeOrNot(InputCheck input_check);
     bool singleMode();
     bool allDetectMode();
     bool detectUsb();

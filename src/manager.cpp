@@ -87,12 +87,24 @@ std::string Manager::inputProductCategory() {
     }
 }
 
-bool Manager::inputConfirmNReSymlink() {
+/// @brief block std::cin
+/// @param input_check 
+/// @return 
+bool Manager::inputReMakeOrNot(InputCheck input_check) {
     std::string str_input;
 
-    std::cout << "== Please check if symlink name is right or not." << std::endl;
-    std::cout << "== Type 'y' if you want to make a re-symlink again."  << std::endl;
-    std::cout << "== Type 'n' to move on the next device."  << std::endl;
+    if(input_check == InputCheck::RE_MAKE_UDEV) {
+        std::cout << "Please check real settings. Are you sure to re-make udev rules? (y or n)" << std::endl;
+    } else if(input_check == InputCheck::RE_SYMLINK) {
+        std::cout << "== Please check if symlink name is right or not." << std::endl;
+        std::cout << "== Type 'y' if you want to make a re-symlink again."  << std::endl;
+        std::cout << "== Type 'n' to move on the next device."  << std::endl;
+    } else if(input_check == InputCheck::RE_MAKE_UDEV_AGAIN) {
+        std::cout << "Are you sure to switch the udevrules again? ('y'or'n') " << std::endl;
+    } else if(input_check == InputCheck::RE_MAKE_CANCEL) {
+        std::cout << "== Type 'y' if you want to make a re-symlink manaully again."  << std::endl;
+        std::cout << "== Type 'n' to move back the previous."  << std::endl;
+    }
 
     std::cin >> str_input;
     if(str_input == "y" || str_input == "Y") {
@@ -402,10 +414,7 @@ int Manager::makeUdevRuleByProductCategory() {
         for(;;) {
             this->swapProcess(v_tty_udev, product_category_name);
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            std::cout << "Please check real settings. Are you sure to re-make udev rules? (y or n)" << std::endl;
-            std::string input;
-            std::cin >> input;
-            if(input != "y" && input != "Y") {
+            if(!this->inputReMakeOrNot(InputCheck::RE_MAKE_UDEV)) {
                 ///cancel or okay by user
                 this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::MAP_OK);
                 break;
@@ -420,10 +429,7 @@ int Manager::makeUdevRuleByProductCategory() {
         for(;;) {
             this->stepByStepProcess(v_tty_udev, product_category_name);
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            std::cout << "Please check real settings. Are you sure to re-make udev rules? (y or n)" << std::endl;
-            std::string input;
-            std::cin >> input;
-            if(input != "y" && input != "Y") {
+            if(!this->inputReMakeOrNot(InputCheck::RE_MAKE_UDEV)) {
                 ///cancel or okay by user
                 this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::MAP_OK);
                 break;
@@ -460,14 +466,17 @@ int Manager::swapProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::string
         std::cout << "\tmodel: " << this->ttyUdevInfo->model << std::endl;
         std::cout << "------------------------\n";
 
-        std::string input_map_ok;
         MapStatus pre_map_status = this->mUsbInfoConfirmer.getStatusFromMapChecklist(product_category_name);
         if(pre_map_status == MapStatus::MAP_OK) {
-            std::cout << product_category_name <<" was already done. Are you sure to switch the udevrules again? ('y'or'n') " << std::endl;
-            std::cin >> input_map_ok;
-            if(input_map_ok == "y" || input_map_ok == "Y") {
+            std::cout << product_category_name <<" was already done." << std::endl;
+            if(this->inputReMakeOrNot(InputCheck::RE_MAKE_UDEV_AGAIN)) {
                 this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::SWAP_INDEX);    
             } else {
+                /// 한번 더 체크
+                if(!this->inputReMakeOrNot(InputCheck::RE_MAKE_CANCEL)) {
+                    std::cout << "Cancel" << std::endl;
+                    return 1;
+                }
                 this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::MAP_DEFAULT);
                 this->mUsbInfoConfirmer.clearMapCheckListSymlink(product_category_name);
             }
@@ -503,7 +512,7 @@ int Manager::swapProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::string
         if(mas_status == MapStatus::SWAP_INDEX) {
             /// swap 된 정보 받아오기
             input_num = this->mUsbInfoConfirmer.getSymlinkIndexFromMapChecklist(product_category_name, i);
-            std::cout << "\tSymlink index from Mapchecklist: " << input_num << std::endl;
+            std::cout << "\tSymlink index from MapCheckList: " << input_num << std::endl;
         }
         ///TODO: 시리얼 정보 없을 경우 커널 정보로 넣어주기
         this->ptrUdevMaker->setSymlink(input_num, this->ttyUdevInfo);
@@ -567,9 +576,9 @@ int Manager::stepByStepProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::
         /// input list check 
         std::string str_input;
         int input_num;
-        MapStatus mas_status = this->mUsbInfoConfirmer.getStatusFromMapChecklist(product_category_name);
+        MapStatus map_status = this->mUsbInfoConfirmer.getStatusFromMapChecklist(product_category_name);
 
-        if(mas_status != MapStatus::SWAP_INDEX) {
+        if(map_status != MapStatus::SWAP_INDEX) {
             str_input = this->inputList("add");
             if(str_input.empty()) {
                 continue;
@@ -590,12 +599,6 @@ int Manager::stepByStepProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::
             std::cerr << "[warn]device may not be found." << std::endl;
         }
         
-        /// auto 면 setSymlink 이름 다시 정해주기
-        if(mas_status == MapStatus::SWAP_INDEX) {
-            /// swap 된 정보 받아오기
-            input_num = this->mUsbInfoConfirmer.getSymlinkIndexFromMapChecklist(product_category_name, i);
-            std::cout << "\tSymlink index from Mapchecklist: " << input_num << std::endl;
-        }
         ///TODO: 시리얼 정보 없을 경우 커널 정보로 넣어주기
         this->ptrUdevMaker->setSymlink(input_num, this->ttyUdevInfo);
 
@@ -618,7 +621,7 @@ int Manager::stepByStepProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::
         //     }
         // }
 
-        if(!this->inputConfirmNReSymlink()) {
+        if(!this->inputReMakeOrNot(InputCheck::RE_SYMLINK)) {
             i++;
             success_cnt--;
             if(i == v_tty_udev.size()) {
