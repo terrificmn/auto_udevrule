@@ -882,7 +882,7 @@ void UsbInfoConfirmer::updateMapCheckList(const std::string product_category_nam
 
     } else {
         int size = this->map_check_list[product_category_name].symlink_name_index.size();
-        ///TODO: origianl_index 확인하기 - 0임
+        ///TODO: origianl_index 확인하기 - 0임 (dummy 경우에는 origianl index가 없음)
         std::cout << "******symlink_name_index size: " << size << std::endl;
         std::cout << "******origin symlink_name_index size: " << this->map_check_list[product_category_name].original_index.size() << std::endl;
         

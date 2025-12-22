@@ -408,38 +408,131 @@ int Manager::makeUdevRuleByProductCategory() {
     std::vector<TtyUdevInfo>& v_tty_udev = opt.value();
     int v_tty_udev_size = v_tty_udev.size();
     std::cout << "Total ** " << v_tty_udev_size << " ** ttyUdevInfos have been found." << std::endl;
-    if(v_tty_udev_size > 0 && v_tty_udev_size < 3) {
-        /// do swapAction
-        std::cout << "DO SWAP!" << std::endl;
-        for(;;) {
+    while(true) {
+        if(v_tty_udev_size == 1) {
+            std::cout << "Single!" << std::endl;
+            this->singleProcess(v_tty_udev, product_category_name);
+        } else if(v_tty_udev_size == 2) {
+            std::cout << "SWAP!" << std::endl;
             this->swapProcess(v_tty_udev, product_category_name);
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            if(!this->inputReMakeOrNot(InputCheck::RE_MAKE_UDEV)) {
-                ///cancel or okay by user
-                this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::MAP_OK);
-                break;
-            }
+        } else if(v_tty_udev_size > 2) {
+            std::cout << "DO STEP BY STEP!" << std::endl;
+            this->stepByStepProcess(v_tty_udev, product_category_name);
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        if(!this->inputReMakeOrNot(InputCheck::RE_MAKE_UDEV)) {
+            ///cancel or okay by user
+            this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::MAP_OK);
+            break;
+        }
+
+        /// only for swap
+        if(v_tty_udev_size == 2) {
             std::cout << "swap again!" << std::endl;
             this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::SWAP_INDEX);
             this->mUsbInfoConfirmer.updateMapCheckList(product_category_name, 0);
         }
-
-    } else if(v_tty_udev_size > 2) {
-        std::cout << "DO STEP BY STEP!" << std::endl;
-        for(;;) {
-            this->stepByStepProcess(v_tty_udev, product_category_name);
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            if(!this->inputReMakeOrNot(InputCheck::RE_MAKE_UDEV)) {
-                ///cancel or okay by user
-                this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::MAP_OK);
-                break;
-            }
-        }
-    }
+    } // while
 
     return 1;
 }
 
+int Manager::singleProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::string& product_category_name) {
+    int final_result = -1;
+    int success_cnt = 1; //fix
+    auto& v = v_tty_udev.at(0); //fix
+    /// ttyUdevInfo 새로 shared_ptr로 생성.
+    if(!this->ttyUdevInfo) {
+        // std::cout << "shared ptr ttyUdevInfo not initialized yet.\n";
+        this->ttyUdevInfo = std::make_shared<TtyUdevInfo>(v);
+    } else {
+        this->ttyUdevInfo.reset();
+        this->ttyUdevInfo = std::make_shared<TtyUdevInfo>(v);
+    }
+    // first, print
+    std::cout << "\n( " << 1 << " ) shared_ptr: ttyUdevInfo\n";
+    std::cout << "\tis_conneted: " << std::boolalpha << this->ttyUdevInfo->is_connected_now << std::endl;
+    std::cout << "\tcurrent tty device num: " << this->ttyUdevInfo->tty_number << std::endl;
+    std::cout << "\tkernel_id: " << this->ttyUdevInfo->kernel << std::endl;
+    std::cout << "\tvendor_id: " << this->ttyUdevInfo->vendor_id << std::endl;
+    std::cout << "\tproduct_id: " << this->ttyUdevInfo->product << std::endl;
+    std::cout << "\tvendor: " << this->ttyUdevInfo->vendor << std::endl;
+    std::cout << "\tmodel: " << this->ttyUdevInfo->model << std::endl;
+    std::cout << "------------------------\n";
+
+    // MapStatus pre_map_status = this->mUsbInfoConfirmer.getStatusFromMapChecklist(product_category_name);
+    // if(pre_map_status == MapStatus::MAP_OK) {
+    //     std::cout << product_category_name <<" was already done." << std::endl;
+    //     if(this->inputReMakeOrNot(InputCheck::RE_MAKE_UDEV_AGAIN)) {
+    //         this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::SWAP_INDEX);    
+    //     } else {
+    //         /// 한번 더 체크
+    //         if(!this->inputReMakeOrNot(InputCheck::RE_MAKE_CANCEL)) {
+    //             std::cout << "Cancel" << std::endl;
+    //             return 1;
+    //         }
+    //         this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::MAP_DEFAULT);
+    //         this->mUsbInfoConfirmer.clearMapCheckListSymlink(product_category_name);
+    //     }
+    // }
+    
+    /// input list check 
+    std::string str_input;
+    int input_num;
+    MapStatus mas_status = this->mUsbInfoConfirmer.getStatusFromMapChecklist(product_category_name);
+
+    str_input = this->inputList("add");
+    if(str_input.empty()) {
+        return 1;
+    }
+    try {
+        input_num = std::stoi(str_input);
+    } catch(const std::exception& e) {
+        std::cerr << "Exception error: " << e.what() << std::endl;
+        return 1;
+    }
+    /// sylmink name 정보 업데이트
+    this->mUsbInfoConfirmer.clearMapCheckListSymlink(product_category_name);
+    this->mUsbInfoConfirmer.updateMapCheckList(product_category_name, input_num);
+    
+    ///FYI: for warning
+    if(this->ptrUdevMaker->getSerialWarn(this->ttyUdevInfo) ) {
+        std::cerr << "[warn]serial info not found. Please change 'use_serial' to false in the config.lua" << std::endl;
+        std::cerr << "[warn]device may not be found." << std::endl;
+    }
+    
+    input_num = this->mUsbInfoConfirmer.getSymlinkIndexFromMapChecklist(product_category_name, 0);
+    std::cout << "\tSymlink index from MapCheckList: " << input_num << std::endl;
+    ///TODO: 시리얼 정보 없을 경우 커널 정보로 넣어주기
+    this->ptrUdevMaker->setSymlink(input_num, this->ttyUdevInfo);
+
+    ///TODO: test 후 주석해제
+    // if(this->ptrUdevMaker->getIsPolicyKitNeeded()) {   
+    //     final_result = this->ptrUdevMaker->createUdevRuleFileWithFork(this->ttyUdevInfo);
+    //     if(final_result == 0) {
+    //         std::vector<std::string> cmd_result_data;
+    //         std::string cmd = "udevadm control --reload-rules; udevadm trigger";
+    //         this->mUsbInfoConfirmer.executeCmd(cmd_result_data, cmd, ResultType::EXECUTE_ONLY);
+    //         success_cnt--;
+    //     }
+
+    // } else {
+    //     // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
+    //     // return this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
+    //     final_result = this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
+    //     if(final_result == 0) {
+    //         success_cnt--;
+    //     }
+    // }
+
+    success_cnt--;
+
+    if(success_cnt == 0) {
+        return final_result;
+    }
+    return 1;
+}
 
 int Manager::swapProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::string& product_category_name) {
     int i=0;
