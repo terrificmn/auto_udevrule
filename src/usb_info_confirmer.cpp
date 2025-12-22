@@ -869,6 +869,8 @@ std::optional<std::vector<TtyUdevInfo>> UsbInfoConfirmer::getTtyUdevInfoVec(cons
 
 void UsbInfoConfirmer::updateMapCheckList(const std::string product_category_name, int index) {
     ///TODO: 에러 처리
+    /// 최초 여기 else 에서 map이 만들어져서 (의도하지 않게) updateMap이하 함수가 작동함;;;; 
+    ///TODO - debug - map_check_list 를 dummy 만들어주기
     if(this->map_check_list[product_category_name].map_status == MapStatus::SWAP_INDEX) {
         std::cout << "updateMapCheckList --> " << product_category_name << std::endl;
         auto temp_v = this->map_check_list[product_category_name].symlink_name_index;
@@ -888,26 +890,85 @@ void UsbInfoConfirmer::updateMapCheckList(const std::string product_category_nam
         
         this->map_check_list[product_category_name].symlink_name_index.push_back(index);
     }
+
+    // auto it = this->map_check_list.find(product_category_name);
+    // if(it != this->map_check_list.end()) {
+    //     if(it->second.map_status == MapStatus::SWAP_INDEX) {
+    //         std::cout << "updateMapCheckList --> " << product_category_name << std::endl;
+    //         auto& temp_v = it->second.symlink_name_index;
+    //         it->second.symlink_name_index.clear();
+    //         ///FYI: 거꾸로 다시 넣어주기
+    //         std::cout <<"\ttemp_v size: " << temp_v.size() << std::endl;
+    //         for(int i=temp_v.size(); i > 0; i--) {
+    //             it->second.symlink_name_index.push_back(temp_v.at(i-1)); /// real index than size
+    //             std::cout << "i(" << i << "): " << temp_v.at(i-1) << std::endl;
+    //         }
+
+    //     } else {
+    //        int size = it->second.symlink_name_index.size();
+    //         ///TODO: origianl_index 확인하기 - 0임 (dummy 경우에는 origianl index가 없음)
+    //         std::cout << "******symlink_name_index size: " << size << std::endl;
+    //         std::cout << "******origin symlink_name_index size: " << it->second.original_index.size() << std::endl;
+    //         it->second.symlink_name_index.push_back(index);
+    //     }
+
+    // } else {
+    //     std::cerr << "Couldn't find " << product_category_name << ". map_check_list did not update." << std::endl;
+    //     ///TEST ONLY
+    //     this->map_check_list[product_category_name].symlink_name_index.push_back(index);
+
+    // }
 }
 
 void UsbInfoConfirmer::updateStatusMapCheckList(const std::string product_category_name, MapStatus map_status) {
-    ///TODO: 에러 처리
-    this->map_check_list[product_category_name].map_status = map_status;
+    ///if-statement with initailizer
+    auto it = this->map_check_list.find(product_category_name);
+    if(it != this->map_check_list.end()) {
+        std::cerr << "found " << product_category_name << std::endl;
+        it->second.map_status = map_status;
+    } else {
+        std::cerr << "Couldn't find " << product_category_name << ". No update MapStatus." << std::endl;
+        /// TEST ONLY
+        // this->map_check_list[product_category_name].map_status = map_status;
+    }
+    // this->map_check_list[product_category_name].map_status = map_status;
+    // std::cout << "Map status: " << this->map_check_list[product_category_name].map_status << std::endl;
 }
 
 void UsbInfoConfirmer::clearMapCheckListSymlink(const std::string& product_category_name) {
-    this->map_check_list[product_category_name].symlink_name_index.clear();
+    auto it = this->map_check_list.find(product_category_name);
+    if(it != this->map_check_list.end()) {
+        it->second.symlink_name_index.clear();
+    } else {
+        std::cerr << "Couldn't find " << product_category_name << ". It failed to clear symlink_name_index." << std::endl;
+        ///TEST ONLY
+        // this->map_check_list[product_category_name].symlink_name_index.clear();
+    }
 }
 
 
 MapStatus UsbInfoConfirmer::getStatusFromMapChecklist(const std::string product_category_name) {
-    ///TODO: 에러 처리
-    return this->map_check_list[product_category_name].map_status;
+    auto it = this->map_check_list.find(product_category_name); 
+    if(it != this->map_check_list.end()) {
+        return it->second.map_status;
+    } else {
+        std::cerr << "Couldn't find " << product_category_name << ". Return default MapStatus." << std::endl;
+        // return this->map_check_list[product_category_name].map_status;
+        return MapStatus::MAP_FAILURE;
+    }
+    // return this->map_check_list[product_category_name].map_status;
 }
 
 int UsbInfoConfirmer::getSymlinkIndexFromMapChecklist(const std::string product_category_name, int idx) {
-    ///TODO: 에러 처리
-    return this->map_check_list[product_category_name].symlink_name_index.at(idx);
+    auto it = this->map_check_list.find(product_category_name); 
+    if(it != this->map_check_list.end()) {
+        return it->second.symlink_name_index.at(idx);
+    } else {
+        std::cerr << "Couldn't find " << product_category_name << ". Return -1." << std::endl;
+        ///TEST ONLY
+        // return this->map_check_list[product_category_name].symlink_name_index.at(idx);
+        return -1;
+    }
 }
 
 int UsbInfoConfirmer::showResult(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info) {

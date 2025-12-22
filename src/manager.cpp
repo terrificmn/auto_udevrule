@@ -405,6 +405,12 @@ int Manager::makeUdevRuleByProductCategory() {
         return 1;
     }
 
+    // std::cout << "\n\nTEST\n";
+    // this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::MAP_OK);
+    // this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::MAP_OK);
+    // this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::MAP_OK);
+    // return 1;
+
     std::vector<TtyUdevInfo>& v_tty_udev = opt.value();
     int v_tty_udev_size = v_tty_udev.size();
     std::cout << "Total ** " << v_tty_udev_size << " ** ttyUdevInfos have been found." << std::endl;
