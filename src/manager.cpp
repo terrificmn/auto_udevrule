@@ -508,8 +508,14 @@ int Manager::singleProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::stri
         std::cerr << "[warn]device may not be found." << std::endl;
     }
     
+    ///FYTL 꼭 getSymlinkIndexFromMapChecklist 에서 set(위) 및 get 을 안해도 될 듯 하나, 일단 기존 형식으로 맞춤
     input_num = this->mUsbInfoConfirmer.getSymlinkIndexFromMapChecklist(product_category_name, 0);
-    std::cout << "\tSymlink index from MapCheckList: " << input_num << std::endl;
+    if(input_num == -1) {
+        std::cerr << "Couldn't find the symlink index." << std::endl;
+        return 1;
+    }
+    std::cout << "Symlink index from MapCheckList: " << input_num << std::endl;
+    this->ptrUdevMaker->getSymlinkNameFromList(input_num);
     ///TODO: 시리얼 정보 없을 경우 커널 정보로 넣어주기
     this->ptrUdevMaker->setSymlink(input_num, this->ttyUdevInfo);
 
@@ -611,7 +617,12 @@ int Manager::swapProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::string
         if(mas_status == MapStatus::SWAP_INDEX) {
             /// swap 된 정보 받아오기
             input_num = this->mUsbInfoConfirmer.getSymlinkIndexFromMapChecklist(product_category_name, i);
-            std::cout << "\tSymlink index from MapCheckList: " << input_num << std::endl;
+            if(input_num == -1) {
+                std::cerr << "Couldn't find the symlink index." << std::endl;
+                continue;
+            }
+            std::cout << "Symlink index from MapCheckList: " << input_num << std::endl;
+            this->ptrUdevMaker->getSymlinkNameFromList(input_num);
         }
         ///TODO: 시리얼 정보 없을 경우 커널 정보로 넣어주기
         this->ptrUdevMaker->setSymlink(input_num, this->ttyUdevInfo);

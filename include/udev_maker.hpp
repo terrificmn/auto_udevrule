@@ -20,6 +20,7 @@ public:
     bool getIsPolicyKitNeeded();
     bool setSymlink(int v_list_index, std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
     void setSymlinkNameByType(const std::string& user_input, std::shared_ptr<TtyUdevInfo> shared_tty_udev_info);
+    std::string getSymlinkNameFromList(int list_index);
     std::string makeSymlinkFilename(const std::string& user_input_str);
     std::string veritySymlinkName(const std::string& user_input_str);
     bool openFile(std::fstream* fs, std::string filename, Type type_enum);

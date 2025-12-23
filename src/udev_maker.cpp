@@ -117,6 +117,25 @@ void UdevMaker::setSymlinkNameByType(const std::string& user_input, std::shared_
     std::cout << "udev_filename: " << this->udev_filename << std::endl;
 }
 
+std::string UdevMaker::getSymlinkNameFromList(int list_index) {
+    // 넘버 자체를 +1 해서 받으므로 사이즈 만큼은 받는다. (0일 때 -1 되는 것 방지)
+    if(list_index > this->v_device_list.size() || list_index == 0) {
+        std::cerr << "exceed index number!" << std::endl;
+        return "";
+    }
+
+    // list_index 는 처음에 인덱스에 +1 를 해줬으므로 다시 -1 해준다.
+    try {
+        std::string rtn = this->v_symlink_list.at(list_index -1);
+        std::cout << "symlink name: " << rtn << std::endl;
+        return rtn;
+
+    } catch(const std::exception& e) {
+        std::cerr << "Exception Error: " << e.what() << std::endl;
+        return "";
+    }
+}
+
 /// @brief make a symlink file name. '-' is going to be inserted between words like hello-world by user's input: HelloWorld or hello_world
 /// @param user_input_str 
 /// @return 
@@ -241,8 +260,7 @@ void UdevMaker::makeScript(std::fstream* fs) {
 }
 
 bool UdevMaker::getSerialWarn(std::shared_ptr<TtyUdevInfo> shared_tty_udev_info) {
-    std::cout << "inside getSerialWarn()" << std::endl;
-    std::cout << "current use count :" << shared_tty_udev_info.use_count() << std::endl;
+    // std::cout << "current use count :" << shared_tty_udev_info.use_count() << std::endl;
     if(!shared_tty_udev_info) {
         return false;
     }

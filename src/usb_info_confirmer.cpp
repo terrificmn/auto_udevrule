@@ -756,6 +756,7 @@ void UsbInfoConfirmer::makeCopyUdevInfoByVendor() {
     //// 임의 테스트
     {
         this->addDummy();
+        this->addMapChecklistDummy();
         std::cout << "Dummy data has been inserted.\n";
     }
 
@@ -859,7 +860,7 @@ std::optional<std::vector<TtyUdevInfo>> UsbInfoConfirmer::getTtyUdevInfoVec(cons
     // check
     auto& vecs = this->v_udev_by_pc[product_category_name];
     if(vecs.size() > 0) {
-        std::cout << "return : [" << product_category_name << "] info below" << std::endl;
+        std::cout << "\nreturn : [" << product_category_name << "] info below" << std::endl;
         return vecs;
     } else {
 
@@ -868,56 +869,30 @@ std::optional<std::vector<TtyUdevInfo>> UsbInfoConfirmer::getTtyUdevInfoVec(cons
 }
 
 void UsbInfoConfirmer::updateMapCheckList(const std::string product_category_name, int index) {
-    ///TODO: 에러 처리
-    /// 최초 여기 else 에서 map이 만들어져서 (의도하지 않게) updateMap이하 함수가 작동함;;;; 
-    ///TODO - debug - map_check_list 를 dummy 만들어주기
-    if(this->map_check_list[product_category_name].map_status == MapStatus::SWAP_INDEX) {
-        std::cout << "updateMapCheckList --> " << product_category_name << std::endl;
-        auto temp_v = this->map_check_list[product_category_name].symlink_name_index;
-        this->map_check_list[product_category_name].symlink_name_index.clear();
-        ///FYI: 거꾸로 다시 넣어주기
-        std::cout <<"\ttemp_v size: " << temp_v.size() << std::endl;
-        for(int i=temp_v.size(); i > 0; i--) {
-            this->map_check_list[product_category_name].symlink_name_index.push_back(temp_v.at(i-1));
-            std::cout << "i(" << i << "): " << temp_v.at(i-1) << std::endl;
+    ///FYI: 실제 map_check_list가 없을 경우에는 addMapChecklistDummy() 함수 등을 사용해서 테스트
+    auto it = this->map_check_list.find(product_category_name);
+    if(it != this->map_check_list.end()) {
+        if(it->second.map_status == MapStatus::SWAP_INDEX) {
+            std::cout << "updateMapCheckList --> " << product_category_name << std::endl;
+            auto temp_v = it->second.symlink_name_index;
+            it->second.symlink_name_index.clear();
+            ///FYI: 거꾸로 다시 넣어주기
+            std::cout <<"\ttemp_v size: " << temp_v.size() << std::endl;
+            for(int i=temp_v.size(); i > 0; i--) {
+                it->second.symlink_name_index.push_back(temp_v.at(i-1)); /// real index than size
+                // std::cout << "i(" << i << "): " << temp_v.at(i-1) << std::endl;
+            }
+
+        } else {
+            int size = it->second.symlink_name_index.size();
+            std::cout << "*** original_index size: " << it->second.original_index.size() << std::endl;
+            std::cout << "*** symlink_name_index size: " << size << std::endl;
+            it->second.symlink_name_index.push_back(index);
         }
 
     } else {
-        int size = this->map_check_list[product_category_name].symlink_name_index.size();
-        ///TODO: origianl_index 확인하기 - 0임 (dummy 경우에는 origianl index가 없음)
-        std::cout << "******symlink_name_index size: " << size << std::endl;
-        std::cout << "******origin symlink_name_index size: " << this->map_check_list[product_category_name].original_index.size() << std::endl;
-        
-        this->map_check_list[product_category_name].symlink_name_index.push_back(index);
+        std::cerr << "Couldn't find " << product_category_name << ". map_check_list did not update." << std::endl;
     }
-
-    // auto it = this->map_check_list.find(product_category_name);
-    // if(it != this->map_check_list.end()) {
-    //     if(it->second.map_status == MapStatus::SWAP_INDEX) {
-    //         std::cout << "updateMapCheckList --> " << product_category_name << std::endl;
-    //         auto& temp_v = it->second.symlink_name_index;
-    //         it->second.symlink_name_index.clear();
-    //         ///FYI: 거꾸로 다시 넣어주기
-    //         std::cout <<"\ttemp_v size: " << temp_v.size() << std::endl;
-    //         for(int i=temp_v.size(); i > 0; i--) {
-    //             it->second.symlink_name_index.push_back(temp_v.at(i-1)); /// real index than size
-    //             std::cout << "i(" << i << "): " << temp_v.at(i-1) << std::endl;
-    //         }
-
-    //     } else {
-    //        int size = it->second.symlink_name_index.size();
-    //         ///TODO: origianl_index 확인하기 - 0임 (dummy 경우에는 origianl index가 없음)
-    //         std::cout << "******symlink_name_index size: " << size << std::endl;
-    //         std::cout << "******origin symlink_name_index size: " << it->second.original_index.size() << std::endl;
-    //         it->second.symlink_name_index.push_back(index);
-    //     }
-
-    // } else {
-    //     std::cerr << "Couldn't find " << product_category_name << ". map_check_list did not update." << std::endl;
-    //     ///TEST ONLY
-    //     this->map_check_list[product_category_name].symlink_name_index.push_back(index);
-
-    // }
 }
 
 void UsbInfoConfirmer::updateStatusMapCheckList(const std::string product_category_name, MapStatus map_status) {
@@ -928,11 +903,7 @@ void UsbInfoConfirmer::updateStatusMapCheckList(const std::string product_catego
         it->second.map_status = map_status;
     } else {
         std::cerr << "Couldn't find " << product_category_name << ". No update MapStatus." << std::endl;
-        /// TEST ONLY
-        // this->map_check_list[product_category_name].map_status = map_status;
     }
-    // this->map_check_list[product_category_name].map_status = map_status;
-    // std::cout << "Map status: " << this->map_check_list[product_category_name].map_status << std::endl;
 }
 
 void UsbInfoConfirmer::clearMapCheckListSymlink(const std::string& product_category_name) {
@@ -941,8 +912,6 @@ void UsbInfoConfirmer::clearMapCheckListSymlink(const std::string& product_categ
         it->second.symlink_name_index.clear();
     } else {
         std::cerr << "Couldn't find " << product_category_name << ". It failed to clear symlink_name_index." << std::endl;
-        ///TEST ONLY
-        // this->map_check_list[product_category_name].symlink_name_index.clear();
     }
 }
 
@@ -953,10 +922,8 @@ MapStatus UsbInfoConfirmer::getStatusFromMapChecklist(const std::string product_
         return it->second.map_status;
     } else {
         std::cerr << "Couldn't find " << product_category_name << ". Return default MapStatus." << std::endl;
-        // return this->map_check_list[product_category_name].map_status;
         return MapStatus::MAP_FAILURE;
     }
-    // return this->map_check_list[product_category_name].map_status;
 }
 
 int UsbInfoConfirmer::getSymlinkIndexFromMapChecklist(const std::string product_category_name, int idx) {
@@ -965,8 +932,6 @@ int UsbInfoConfirmer::getSymlinkIndexFromMapChecklist(const std::string product_
         return it->second.symlink_name_index.at(idx);
     } else {
         std::cerr << "Couldn't find " << product_category_name << ". Return -1." << std::endl;
-        ///TEST ONLY
-        // return this->map_check_list[product_category_name].symlink_name_index.at(idx);
         return -1;
     }
 }
@@ -1143,4 +1108,115 @@ void UsbInfoConfirmer::addDummy() {
         this->v_udev_by_pc[LuaConfig::luaParam.v_product_category.at(3).alias].push_back(tempTtyUdev3);
         this->v_udev_by_pc[LuaConfig::luaParam.v_product_category.at(3).alias].push_back(tempTtyUdev4);        
     }
+}
+
+void UsbInfoConfirmer::addMapChecklistDummy() {
+    {
+        MapCheckList map_check_list;
+        const std::string& product_name = LuaConfig::luaParam.v_product_category.at(0).alias;
+        auto [it, inserted] = this->map_check_list.emplace(product_name, map_check_list);
+        if(inserted) {
+            std::cout << "MapCheckList: " << product_name << " inserted." << std::endl;
+        }
+        auto it_v_udev = this->v_udev_by_pc.find(product_name);
+        if(it_v_udev != this->v_udev_by_pc.end()) {
+            it->second.size = it_v_udev->second.size();
+        } else {
+            it->second.size = 0;
+        }
+    
+        /// 크게 의미는 없는 것 같다;;; 
+        for(int i=0; i < it->second.size; ++i) {
+            it->second.original_index.push_back(i);
+        }
+    
+        /// print test
+        std::cout << "==============DEBUT================\n";
+        std::cout << "\t" << it->first << std::endl;
+        std::cout << "\t" << "map_status: " << it->second.map_status << std::endl;
+        std::cout << "\t" << "size: " << it->second.size << std::endl;
+        std::cout << "==============     ================\n";
+    }
+
+    {
+        MapCheckList map_check_list;
+        const std::string& product_name = LuaConfig::luaParam.v_product_category.at(1).alias;
+        auto [it, inserted] = this->map_check_list.emplace(product_name, map_check_list);
+        if(inserted) {
+            std::cout << "MapCheckList: " << product_name << " inserted." << std::endl;
+        }
+        auto it_v_udev = this->v_udev_by_pc.find(product_name);
+        if(it_v_udev != this->v_udev_by_pc.end()) {
+            it->second.size = it_v_udev->second.size();
+        } else {
+            it->second.size = 0;
+        }
+    
+        /// 크게 의미는 없는 것 같다;;; 
+        for(int i=0; i < it->second.size; ++i) {
+            it->second.original_index.push_back(i);
+        }
+    
+        /// print test
+        std::cout << "==============DEBUT================\n";
+        std::cout << "\t" << it->first << std::endl;
+        std::cout << "\t" << "map_status: " << it->second.map_status << std::endl;
+        std::cout << "\t" << "size: " << it->second.size << std::endl;
+        std::cout << "==============     ================\n";
+    }
+
+    {
+        MapCheckList map_check_list;
+        const std::string& product_name = LuaConfig::luaParam.v_product_category.at(2).alias;
+        auto [it, inserted] = this->map_check_list.emplace(product_name, map_check_list);
+        if(inserted) {
+            std::cout << "MapCheckList: " << product_name << " inserted." << std::endl;
+        }
+        auto it_v_udev = this->v_udev_by_pc.find(product_name);
+        if(it_v_udev != this->v_udev_by_pc.end()) {
+            it->second.size = it_v_udev->second.size();
+        } else {
+            it->second.size = 0;
+        }
+    
+        /// 크게 의미는 없는 것 같다;;; 
+        for(int i=0; i < it->second.size; ++i) {
+            it->second.original_index.push_back(i);
+        }
+    
+        /// print test
+        std::cout << "==============DEBUT================\n";
+        std::cout << "\t" << it->first << std::endl;
+        std::cout << "\t" << "map_status: " << it->second.map_status << std::endl;
+        std::cout << "\t" << "size: " << it->second.size << std::endl;
+        std::cout << "==============     ================\n";
+    }
+
+    {
+        MapCheckList map_check_list;
+        const std::string& product_name = LuaConfig::luaParam.v_product_category.at(3).alias;
+        auto [it, inserted] = this->map_check_list.emplace(product_name, map_check_list);
+        if(inserted) {
+            std::cout << "MapCheckList: " << product_name << " inserted." << std::endl;
+        }
+        auto it_v_udev = this->v_udev_by_pc.find(product_name);
+        if(it_v_udev != this->v_udev_by_pc.end()) {
+            it->second.size = it_v_udev->second.size();
+        } else {
+            it->second.size = 0;
+        }
+    
+        /// 크게 의미는 없는 것 같다;;; 
+        for(int i=0; i < it->second.size; ++i) {
+            it->second.original_index.push_back(i);
+        }
+    
+        /// print test
+        std::cout << "==============DEBUT================\n";
+        std::cout << "\t" << it->first << std::endl;
+        std::cout << "\t" << "map_status: " << it->second.map_status << std::endl;
+        std::cout << "\t" << "size: " << it->second.size << std::endl;
+        std::cout << "==============     ================\n";
+    }
+
 }

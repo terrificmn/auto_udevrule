@@ -57,6 +57,7 @@ public:
     
     void makeCopyUdevInfoByVendor();
     void addDummy();
+    void addMapChecklistDummy();
     std::optional<std::vector<TtyUdevInfo>> getTtyUdevInfoVec(const std::string& product_category_name);
     void updateMapCheckList(const std::string product_category_name, int index);
     void updateStatusMapCheckList(const std::string product_category_name, MapStatus map_status);
