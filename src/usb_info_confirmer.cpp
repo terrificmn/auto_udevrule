@@ -882,12 +882,20 @@ void UsbInfoConfirmer::updateMapCheckList(const std::string product_category_nam
                 it->second.symlink_name_index.push_back(temp_v.at(i-1)); /// real index than size
                 // std::cout << "i(" << i << "): " << temp_v.at(i-1) << std::endl;
             }
-
-        } else {
+        } else if(it->second.map_status == MapStatus::STEP_PREV_POP) {
             int size = it->second.symlink_name_index.size();
             std::cout << "*** original_index size: " << it->second.original_index.size() << std::endl;
-            std::cout << "*** symlink_name_index size: " << size << std::endl;
+            if(!it->second.symlink_name_index.empty()) {
+                std::cout << "*** symlink_name_index keep the size " << size << std::endl;
+                it->second.symlink_name_index.pop_back();
+            }
             it->second.symlink_name_index.push_back(index);
+            std::cout << "*** new symlink_name_index size: " << it->second.symlink_name_index.size() << std::endl;
+
+        } else {
+            it->second.symlink_name_index.push_back(index);
+            std::cout << "*** original_index size: " << it->second.original_index.size() << std::endl;
+            std::cout << "*** symlink_name_index size: " << it->second.symlink_name_index.size() << std::endl;
         }
 
     } else {

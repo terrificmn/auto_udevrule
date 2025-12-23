@@ -686,6 +686,7 @@ int Manager::stepByStepProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::
         int input_num;
         MapStatus map_status = this->mUsbInfoConfirmer.getStatusFromMapChecklist(product_category_name);
 
+        ///TODO: MAP_OK 일 경우, 업데이트 에: symlin_name_index clear시키기
         if(map_status != MapStatus::SWAP_INDEX) {
             str_input = this->inputList("add");
             if(str_input.empty()) {
@@ -699,6 +700,7 @@ int Manager::stepByStepProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::
             }
             /// sylmink name 정보 업데이트
             this->mUsbInfoConfirmer.updateMapCheckList(product_category_name, input_num);
+            this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::MAP_DEFAULT);
         }
         
         ///FYI: for warning
@@ -740,6 +742,7 @@ int Manager::stepByStepProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::
 
         } else {
             std::cout << "make a re-symlink again" << std::endl;
+            this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::STEP_PREV_POP);
         }
     } // While Loop ends here
 
