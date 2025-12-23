@@ -415,18 +415,23 @@ int Manager::makeUdevRuleByProductCategory() {
     int v_tty_udev_size = v_tty_udev.size();
     std::cout << "Total ** " << v_tty_udev_size << " ** ttyUdevInfos have been found." << std::endl;
     while(true) {
+        int result;
         if(v_tty_udev_size == 1) {
             std::cout << "Single!" << std::endl;
-            this->singleProcess(v_tty_udev, product_category_name);
+            result = this->singleProcess(v_tty_udev, product_category_name);
         } else if(v_tty_udev_size == 2) {
             std::cout << "SWAP!" << std::endl;
-            this->swapProcess(v_tty_udev, product_category_name);
+            result = this->swapProcess(v_tty_udev, product_category_name);
         } else if(v_tty_udev_size > 2) {
             std::cout << "DO STEP BY STEP!" << std::endl;
-            this->stepByStepProcess(v_tty_udev, product_category_name);
+            result = this->stepByStepProcess(v_tty_udev, product_category_name);
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        if(result == -2) {
+            std::cout << result << " User done" << std::endl;
+            break;
+        }
         if(!this->inputReMakeOrNot(InputCheck::RE_MAKE_UDEV)) {
             ///cancel or okay by user
             this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::MAP_OK);
@@ -467,21 +472,15 @@ int Manager::singleProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::stri
     std::cout << "\tmodel: " << this->ttyUdevInfo->model << std::endl;
     std::cout << "------------------------\n";
 
-    // MapStatus pre_map_status = this->mUsbInfoConfirmer.getStatusFromMapChecklist(product_category_name);
-    // if(pre_map_status == MapStatus::MAP_OK) {
-    //     std::cout << product_category_name <<" was already done." << std::endl;
-    //     if(this->inputReMakeOrNot(InputCheck::RE_MAKE_UDEV_AGAIN)) {
-    //         this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::SWAP_INDEX);    
-    //     } else {
-    //         /// 한번 더 체크
-    //         if(!this->inputReMakeOrNot(InputCheck::RE_MAKE_CANCEL)) {
-    //             std::cout << "Cancel" << std::endl;
-    //             return 1;
-    //         }
-    //         this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::MAP_DEFAULT);
-    //         this->mUsbInfoConfirmer.clearMapCheckListSymlink(product_category_name);
-    //     }
-    // }
+    MapStatus pre_map_status = this->mUsbInfoConfirmer.getStatusFromMapChecklist(product_category_name);
+    if(pre_map_status == MapStatus::MAP_OK) {
+        std::cout << product_category_name <<" was already done." << std::endl;
+        if(this->inputReMakeOrNot(InputCheck::RE_MAKE_UDEV_AGAIN)) {
+            this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::MAP_DEFAULT);
+        } else {
+            return -2; // now -2 for cancle
+        }
+    }
     
     /// input list check 
     std::string str_input;
@@ -579,8 +578,7 @@ int Manager::swapProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::string
             } else {
                 /// 한번 더 체크
                 if(!this->inputReMakeOrNot(InputCheck::RE_MAKE_CANCEL)) {
-                    std::cout << "Cancel" << std::endl;
-                    return 1;
+                    return -2;
                 }
                 this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::MAP_DEFAULT);
                 this->mUsbInfoConfirmer.clearMapCheckListSymlink(product_category_name);
