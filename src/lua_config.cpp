@@ -81,11 +81,11 @@ void LuaConfig::createLuaFile(std::ofstream& creatFile) {
     timeout_sec = 30,
     
     product_category = {
-        { vendor = "1", model = "hello", alias = "product1" },
-        { vendor = "2", model = "new", alias = "product2" },
-        { vendor = "3", model = "world", alias = "product3" },
-        { vendor = "4", model = "good", alias = "product4" },
-        { vendor = "5", model = "bye", alias = "product5" }
+        { vendor = "ROBOTIS", model = "OpenCR", alias = "amrbd" },
+        { vendor = "Silicon_Labs", model = "CP2102N_USB", alias = "sllidar" },
+        { vendor = "1a86", model = "USB_Serial", alias = "coin-lidar" },
+        { vendor = "Espressif", model = "USB_JTAG", alias = "loadcell" },
+        { vendor = "5", model = "bye", alias = "etc" }
     }
 })");
     creatFile << context;

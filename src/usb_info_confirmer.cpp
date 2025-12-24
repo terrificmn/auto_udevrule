@@ -754,11 +754,11 @@ void UsbInfoConfirmer::makeCopyUdevInfoByVendor() {
 
     ///TODO: 테스트 후 삭제
     //// 임의 테스트
-    {
-        this->addDummy();
-        this->addMapChecklistDummy();
-        std::cout << "Dummy data has been inserted.\n";
-    }
+    // {
+    //     this->addDummy();
+    //     this->addMapChecklistDummy();
+    //     std::cout << "Dummy data has been inserted.\n";
+    // }
 
     for(auto& udev : *this->sh_un_tty_udev_info) {
         // udev.first
@@ -775,7 +775,7 @@ void UsbInfoConfirmer::makeCopyUdevInfoByVendor() {
             ///FYI: unorder_map은 not allow to have duplicated keys , map 도 마찬가지지만, vector로 추가하는 것은 가능
             std::string product_category_name = LuaConfig::luaParam.v_product_category.at(0).alias;
             ///TODO: 임의 테스트 후 테스트 후 아래 주석 해제
-            // this->v_udev_by_vendor[product_category_name].push_back(udev.second);
+            this->v_udev_by_pc[product_category_name].push_back(udev.second);
             std::cout << "push_back as " << product_category_name << std::endl;
 
             MapCheckList map_check_list;
@@ -795,7 +795,7 @@ void UsbInfoConfirmer::makeCopyUdevInfoByVendor() {
             ///FYI: unorder_map은 not allow to have duplicated keys , map 도 마찬가지지만, vector로 추가하는 것은 가능
             std::string product_category_name = LuaConfig::luaParam.v_product_category.at(1).alias;
             ///TODO: 임의 테스트 후 테스트 후 아래 주석 해제
-            // this->v_udev_by_vendor[product_category_name].push_back(udev.second);
+            this->v_udev_by_pc[product_category_name].push_back(udev.second);
             MapCheckList map_check_list;
             map_check_list.size = this->v_udev_by_pc.size();
             for(int i=0; i<map_check_list.size; ++i) {
@@ -812,13 +812,22 @@ void UsbInfoConfirmer::makeCopyUdevInfoByVendor() {
             std::string product_category_name = LuaConfig::luaParam.v_product_category.at(2).alias;
             ///FYI: unorder_map은 not allow to have duplicated keys , map 도 마찬가지지만, vector로 추가하는 것은 가능
             ///TODO: 임의 테스트 후 테스트 후 아래 주석 해제
-            // this->v_udev_by_vendor[product_category_name].push_back(udev.second);
+            this->v_udev_by_pc[product_category_name].push_back(udev.second);
             MapCheckList map_check_list;
             map_check_list.size = this->v_udev_by_pc.size();
             for(int i=0; i<map_check_list.size; ++i) {
                 map_check_list.original_index.push_back(i);
             }
             this->map_check_list[product_category_name] = map_check_list;
+
+            // // check
+            // std::cout << "----to check if v_udev_by_pc inserted" << std::endl;
+            // std::cout << "product_category_name: " << product_category_name << std::endl;
+            // auto it = this->v_udev_by_pc.find(product_category_name);
+            // if(it != this->v_udev_by_pc.end()) {
+            //     std::cout << "tty_number: " << it->second.at(0).tty_number << std::endl;
+            //     std::cout << "vendor: " << it->second.at(0).vendor << std::endl;
+            // }
             continue;
         } else {
             std::cout << "Not found vendor." << std::endl;
@@ -829,7 +838,7 @@ void UsbInfoConfirmer::makeCopyUdevInfoByVendor() {
             std::string product_category_name = LuaConfig::luaParam.v_product_category.at(3).alias;
             ///FYI: unorder_map은 not allow to have duplicated keys , map 도 마찬가지지만, vector로 추가하는 것은 가능
             ///TODO: 임의 테스트 후 테스트 후 아래 주석 해제
-            // this->v_udev_by_vendor[product_category_name].push_back(udev.second);
+            this->v_udev_by_pc[product_category_name].push_back(udev.second);
             //// 임의 테스트
             MapCheckList map_check_list;
             map_check_list.size = this->v_udev_by_pc.size();
@@ -842,15 +851,24 @@ void UsbInfoConfirmer::makeCopyUdevInfoByVendor() {
             std::cout << "Not found vendor." << std::endl;
         }
         //etc .. you could try to find model or vendor
-        // if(udev.second.vendor.find(LuaConfig::luaParam.v_product_category.at(4).vendor) != std::string::npos) {
-        //     std::cout << LuaConfig::luaParam.v_product_category.at(4).vendor << " vendor matched. " << udev.second.vendor << std::endl;
-        //     std::string product_category_name = LuaConfig::luaParam.v_product_category.at(4).alias;
-        //     ///FYI: unorder_map은 not allow to have duplicated keys , map 도 마찬가지지만, vector로 추가하는 것은 가능
-        //     // this->v_udev_by_vendor[product_category_name].push_back(udev.second);
-        //     continue;
-        // } else {
-        //     std::cout << "Not found vendor." << std::endl;
-        // }
+
+        if(udev.second.vendor.find(LuaConfig::luaParam.v_product_category.at(4).vendor) != std::string::npos) {
+            std::cout << LuaConfig::luaParam.v_product_category.at(4).vendor << " vendor matched. " << udev.second.vendor << std::endl;
+            std::string product_category_name = LuaConfig::luaParam.v_product_category.at(4).alias;
+            ///FYI: unorder_map은 not allow to have duplicated keys , map 도 마찬가지지만, vector로 추가하는 것은 가능
+            // auto [it, inserted] = this->v_udev_by_pc.emplace(product_category_name, udev.second);
+            
+            this->v_udev_by_pc[product_category_name].push_back(udev.second);
+            MapCheckList map_check_list;
+            map_check_list.size = this->v_udev_by_pc.size();
+            for(int i=0; i<map_check_list.size; ++i) {
+                map_check_list.original_index.push_back(i);
+            }
+            this->map_check_list[product_category_name] = map_check_list;
+            continue;
+        } else {
+            std::cout << "Not found vendor." << std::endl;
+        }
     } // the end of for loop
 }
 

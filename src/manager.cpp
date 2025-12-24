@@ -178,7 +178,7 @@ bool Manager::allDetectMode() {
     if(!res) {
         std::cerr << "detectUsbs error\n";
         ///TODO: test onlY
-        // return false;
+        return false;
     }
 
     ///1. 전체를 makeUdevRule 실행하거나
@@ -519,25 +519,25 @@ int Manager::singleProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::stri
     this->ptrUdevMaker->setSymlink(input_num, this->ttyUdevInfo);
 
     ///TODO: test 후 주석해제
-    // if(this->ptrUdevMaker->getIsPolicyKitNeeded()) {   
-    //     final_result = this->ptrUdevMaker->createUdevRuleFileWithFork(this->ttyUdevInfo);
-    //     if(final_result == 0) {
-    //         std::vector<std::string> cmd_result_data;
-    //         std::string cmd = "udevadm control --reload-rules; udevadm trigger";
-    //         this->mUsbInfoConfirmer.executeCmd(cmd_result_data, cmd, ResultType::EXECUTE_ONLY);
-    //         success_cnt--;
-    //     }
+    if(this->ptrUdevMaker->getIsPolicyKitNeeded()) {   
+        final_result = this->ptrUdevMaker->createUdevRuleFileWithFork(this->ttyUdevInfo);
+        if(final_result == 0) {
+            std::vector<std::string> cmd_result_data;
+            std::string cmd = "udevadm control --reload-rules; udevadm trigger";
+            this->mUsbInfoConfirmer.executeCmd(cmd_result_data, cmd, ResultType::EXECUTE_ONLY);
+            success_cnt--;
+        }
 
-    // } else {
-    //     // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
-    //     // return this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
-    //     final_result = this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
-    //     if(final_result == 0) {
-    //         success_cnt--;
-    //     }
-    // }
+    } else {
+        // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
+        // return this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
+        final_result = this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
+        if(final_result == 0) {
+            success_cnt--;
+        }
+    }
 
-    success_cnt--;
+    // success_cnt--;
 
     if(success_cnt == 0) {
         return final_result;
@@ -626,26 +626,24 @@ int Manager::swapProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::string
         this->ptrUdevMaker->setSymlink(input_num, this->ttyUdevInfo);
 
         ///TODO: test 후 주석해제
-        // if(this->ptrUdevMaker->getIsPolicyKitNeeded()) {   
-        //     final_result = this->ptrUdevMaker->createUdevRuleFileWithFork(this->ttyUdevInfo);
-        //     if(final_result == 0) {
-        //         std::vector<std::string> cmd_result_data;
-        //         std::string cmd = "udevadm control --reload-rules; udevadm trigger";
-        //         this->mUsbInfoConfirmer.executeCmd(cmd_result_data, cmd, ResultType::EXECUTE_ONLY);
-        //         success_cnt--;
-        //     }
+        if(this->ptrUdevMaker->getIsPolicyKitNeeded()) {   
+            final_result = this->ptrUdevMaker->createUdevRuleFileWithFork(this->ttyUdevInfo);
+            if(final_result == 0) {
+                std::vector<std::string> cmd_result_data;
+                std::string cmd = "udevadm control --reload-rules; udevadm trigger";
+                this->mUsbInfoConfirmer.executeCmd(cmd_result_data, cmd, ResultType::EXECUTE_ONLY);
+                success_cnt--;
+            }
 
-        // } else {
-        //     // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
-        //     // return this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
-        //     final_result = this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
-        //     if(final_result == 0) {
-        //         success_cnt--;
-        //     }
-        // }
-
-        i++;
-        success_cnt--;
+        } else {
+            // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
+            // return this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
+            final_result = this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
+            if(final_result == 0) {
+                success_cnt--;
+            }
+        }
+        
     } // For loop ends here
 
     if(success_cnt == 0) {
@@ -713,27 +711,29 @@ int Manager::stepByStepProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::
         this->ptrUdevMaker->setSymlink(input_num, this->ttyUdevInfo);
 
         ///TODO: test 후 주석해제
-        // if(this->ptrUdevMaker->getIsPolicyKitNeeded()) {   
-        //     final_result = this->ptrUdevMaker->createUdevRuleFileWithFork(this->ttyUdevInfo);
-        //     if(final_result == 0) {
-        //         std::vector<std::string> cmd_result_data;
-        //         std::string cmd = "udevadm control --reload-rules; udevadm trigger";
-        //         this->mUsbInfoConfirmer.executeCmd(cmd_result_data, cmd, ResultType::EXECUTE_ONLY);
-        //         success_cnt--;
-        //     }
+        if(this->ptrUdevMaker->getIsPolicyKitNeeded()) {   
+            final_result = this->ptrUdevMaker->createUdevRuleFileWithFork(this->ttyUdevInfo);
+            if(final_result == 0) {
+                std::vector<std::string> cmd_result_data;
+                std::string cmd = "udevadm control --reload-rules; udevadm trigger";
+                this->mUsbInfoConfirmer.executeCmd(cmd_result_data, cmd, ResultType::EXECUTE_ONLY);
+                // success_cnt--;
+            }
 
-        // } else {
-        //     // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
-        //     // return this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
-        //     final_result = this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
-        //     if(final_result == 0) {
-        //         success_cnt--;
-        //     }
-        // }
+        } else {
+            // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
+            // return this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
+            final_result = this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
+            // if(final_result == 0) {
+            //     success_cnt--;
+            // }
+        }
 
         if(!this->inputReMakeOrNot(InputCheck::RE_SYMLINK)) {
             i++;
-            success_cnt--;
+            if(final_result == 0) {
+                success_cnt--;
+            }
             if(i == v_tty_udev.size()) {
                 std::cout << "Now stepbyStepProcess complete!" << std::endl;
                 ///TODO: 이제 실제 symlink 연결해주는 코드 추가하기
