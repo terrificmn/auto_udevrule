@@ -185,7 +185,6 @@ bool Manager::allDetectMode() {
 
     ///2. 그룹별로 진행
     // 유저 반응에 따라 
-    std::cout << "\n\nTEST DUMMY INFO" << std::endl;
     while(true) {
         /// 1. 새로 만들어진 map을 통해서 진행 (product_category (vendor or model 정보)), 첫 시도만 만듬
         this->mUsbInfoConfirmer.makeCopyUdevInfoByVendor();

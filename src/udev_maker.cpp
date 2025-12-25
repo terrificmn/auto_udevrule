@@ -276,13 +276,11 @@ void UdevMaker::makeContent(std::string& udev_str, std::shared_ptr<TtyUdevInfo> 
         return;
     }
 
-    /// static LuaConfig's variable already set.
-    if(LuaConfig::use_kernel) {
-        udev_str = "SUBSYSTEM==\"tty\", KERNELS==\"" + shared_tty_udev_info->kernel + "\", ATTRS{idVendor}==\"" + shared_tty_udev_info->vendor_id + "\", ";
-    } else {
-        udev_str = "SUBSYSTEM==\"tty\", ATTRS{idVendor}==\"" + shared_tty_udev_info->vendor_id + "\", ";
-    }
+    udev_str = "SUBSYSTEM==\"tty\", ATTRS{idVendor}==\"" + shared_tty_udev_info->vendor_id + "\", ATTRS{idProduct}==\"" + shared_tty_udev_info->product + "\", ";
 
+    /// static LuaConfig's variable already set.
+    /// priority is use_serial 
+    bool is_serial_empty = false;
     if(LuaConfig::use_serial) {
         if(!shared_tty_udev_info->serial.empty()) {
             udev_str.append("ATTRS{serial}==\"" +  shared_tty_udev_info->serial  + "\", ");
@@ -290,9 +288,12 @@ void UdevMaker::makeContent(std::string& udev_str, std::shared_ptr<TtyUdevInfo> 
             ///FYI: Some devices don't have serial short number. Then LuaConfig::use_serial is ignored. 
             ///FYI: Because the usb device will not be recognized if the file is written without serial info, 
             std::cout << "[warn] serial number not found. The kernel info is used." << std::endl;
+            udev_str.append("KERNELS==\"" + shared_tty_udev_info->kernel + "\", ");
         }
+    } else {
+        udev_str.append("KERNELS==\"" + shared_tty_udev_info->kernel + "\", ");
     }
-    udev_str.append("ATTRS{idProduct}==\"" + shared_tty_udev_info->product + "\", MODE:=\"0666\", GROUP:=\"dialout\", SYMLINK+=\"" + shared_tty_udev_info->symlink_name + "\"");
+    udev_str.append("MODE:=\"0666\", GROUP:=\"dialout\", SYMLINK+=\"" + shared_tty_udev_info->symlink_name + "\"");
     
     ///DEBUG
     std::cout << "\nscript's content:\n";
