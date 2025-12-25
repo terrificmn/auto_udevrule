@@ -584,6 +584,7 @@ int Manager::swapProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::string
                 }
                 this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::MAP_DEFAULT);
                 this->mUsbInfoConfirmer.clearMapCheckListSymlink(product_category_name);
+                ///TODO: 새로 할 경우 지우기; 지우는 타이밍도 정해야함;;;
             }
         }
         
@@ -745,6 +746,7 @@ int Manager::stepByStepProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::
         } else {
             std::cout << "make a re-symlink again" << std::endl;
             this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::STEP_PREV_POP);
+            ///TODO: 전에 생성된 파일 지우기, 지운다고 워닝 띄우기 (다른 symlink로 변경하면 기존 파일이 계속 남아 있고, 새로운 파일은 계속 생성되므로,)
         }
     } // While Loop ends here
 
