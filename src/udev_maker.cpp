@@ -284,7 +284,13 @@ void UdevMaker::makeContent(std::string& udev_str, std::shared_ptr<TtyUdevInfo> 
     }
 
     if(LuaConfig::use_serial) {
-        udev_str.append("ATTRS{serial}==\"" +  shared_tty_udev_info->serial  + "\", ");
+        if(!shared_tty_udev_info->serial.empty()) {
+            udev_str.append("ATTRS{serial}==\"" +  shared_tty_udev_info->serial  + "\", ");
+        } else {
+            ///FYI: Some devices don't have serial short number. Then LuaConfig::use_serial is ignored. 
+            ///FYI: Because the usb device will not be recognized if the file is written without serial info, 
+            std::cout << "[warn] serial number not found. The kernel info is used." << std::endl;
+        }
     }
     udev_str.append("ATTRS{idProduct}==\"" + shared_tty_udev_info->product + "\", MODE:=\"0666\", GROUP:=\"dialout\", SYMLINK+=\"" + shared_tty_udev_info->symlink_name + "\"");
     
@@ -632,7 +638,7 @@ void UdevMaker::createBasicList(std::string list_full_path) {
         fs << "faduino-com\n";
         fs << "amrbd\n";
         fs << "amrbd-debug\n";
-        fs << "front-lidar1\n";
+        fs << "front-lidar\n";
         fs << "rear-lidar\n";
         fs << "front-aux-lidar\n";
         fs << "rear-aux-lidar\n";
