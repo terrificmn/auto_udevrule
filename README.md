@@ -77,8 +77,10 @@ g++ -std=c++17 -o helper_writer sub-src/helper_writer.cpp
 
 2-1. 메인 프로그램
 ```
-g++ -std=c++17 -o getudev src/main.cpp src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/manager.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua -ldl
+g++ -std=c++17 -o getudev src/main.cpp src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/manager.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua -ldl -DPUBLIC_BUILD=1
 ```
+> or -DPROJECT_BUILD=1 
+compiler flag 필수. error 메세지 참고
 
 2-2, 우분투 용 빌드 (20 / 22) - development 일 경우에만 사용  
 **중요**Release 빌드는 cmake 를 사용한다. - 크게 다른점, lua를 static으로 빌드

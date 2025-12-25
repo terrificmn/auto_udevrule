@@ -75,6 +75,22 @@ bool LuaConfig::initialze(const std::string& config_name, std::string override_p
 /// @brief create a basic lua file
 /// @param creatFile 
 void LuaConfig::createLuaFile(std::ofstream& creatFile) {
+#if PUBLIC_BUILD
+    std::string context(R"(PARAM = {
+    use_kernel = true,
+    use_serial = true,
+    timeout_sec = 30,
+    
+    product_category = {
+        { vendor = "1", model = "hello", alias = "product1" },
+        { vendor = "2", model = "new", alias = "product2" },
+        { vendor = "3", model = "world", alias = "product3" },
+        { vendor = "4", model = "good", alias = "product4" },
+        { vendor = "5", model = "bye", alias = "product5" }
+    }
+})");
+    creatFile << context;
+#elif PROJECT_BUILD
     std::string context(R"(PARAM = {
     use_kernel = true,
     use_serial = true,
@@ -89,6 +105,10 @@ void LuaConfig::createLuaFile(std::ofstream& creatFile) {
     }
 })");
     creatFile << context;
+#else
+    #error "No build type defined: -DPUBLIC_BUILD or -DPROJECT_BUILD"
+#endif
+    
 }
 
 

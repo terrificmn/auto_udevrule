@@ -612,6 +612,18 @@ void UdevMaker::createBasicList(std::string list_full_path) {
     std::fstream fs;
 
     fs.open(list_path, std::ios::out);
+#if PUBLIC_BUILD
+    if(fs.is_open()) {
+        fs << "## a list of devices\n";
+        fs << "## It will be used for the file name and symlink name.\n";
+        fs << "## If any device newly needs, then add its name the below.\n";
+        fs << "faduino-upload\n";
+        fs << "faduino-com\n";
+        fs << "esp\n";
+        fs << "arudino-1\n";
+        fs << "my-sensor\n";
+    }
+#elif PROJECT_BUILD
     if(fs.is_open()) {
         fs << "## a list of devices\n";
         fs << "## It will be used for the file name and symlink name.\n";
@@ -629,6 +641,9 @@ void UdevMaker::createBasicList(std::string list_full_path) {
         fs << "scale3\n";
         fs << "tfluna\n";
     }
+#else
+    #error "No build type defined: -DPUBLIC_BUILD or -DPROJECT_BUILD"
+#endif
     fs.close();
     std::cout << "A list_file has been created.\n";
     std::cout << "Each device name in the list_file will be used for the symlink name and file name.\n";

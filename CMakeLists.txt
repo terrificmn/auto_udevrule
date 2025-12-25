@@ -6,6 +6,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 ## lua static path
 set(LUA_ROOT /opt/lua-5.3-static)
 
+option(PUBLIC_BUILD "Build for public version" ON)
+if(PUBLIC_BUILD)
+    add_compile_definitions(PUBLIC_BUILD=1)
+else()
+    add_compile_definitions(PROJECT_BUILD=1)
+endif()
+
 add_library(lua_static STATIC IMPORTED)
 set_target_properties(lua_static PROPERTIES
     IMPORTED_LOCATION ${LUA_ROOT}/lib/liblua.a
