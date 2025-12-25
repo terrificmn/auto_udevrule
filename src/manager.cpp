@@ -219,6 +219,9 @@ bool Manager::detectUsb() {
         // std::cout << "return result string: " << resultData.result_str << std::endl;
 
         /// 1. time check
+        /// IMPORTANT: 'Current logic' is to find a ttyUSB first then ttyACM. It stops to find the ttyACM if the ttyUSB is already found (it breaks the loop).
+        /// FYI: The idea is to find the last device which has no timeout.
+        /// For example: USB0 past 40 seconds, ACM0 past 20 secs, then ttyACM0 can be found.
         bool detected_time_result = false;
         std::string detected_t_str = this->mUsbInfoConfirmer.getDetectedTime(resultData.result_str);
         if(!detected_t_str.empty()) {
@@ -235,7 +238,7 @@ bool Manager::detectUsb() {
                 std::string cmd = "ls /dev/ttyUSB" + std::to_string(resultData.found_device_num);
                 bool res = this->mUsbInfoConfirmer.executeSimpleCmd(cmd);
                 if(!res) {
-                    std::cout << "ttyUSB" << resultData.found_device_num << "not connected." << std::endl;
+                    std::cout << "ttyUSB" << resultData.found_device_num << " NOT connected." << std::endl;
                     continue; /// still have one left
                 }
             }
@@ -254,19 +257,19 @@ bool Manager::detectUsb() {
                 std::string cmd = "ls /dev/ttyACM" + std::to_string(resultData.found_device_num);
                 bool res = this->mUsbInfoConfirmer.executeSimpleCmd(cmd);
                 if(!res) {
-                    std::cout << "ttyACM" << resultData.found_device_num << " is not connected." << std::endl;
+                    std::cout << "ttyACM" << resultData.found_device_num << " is NOT connected." << std::endl;
                     return false;
                 }
             }
             /// 3-2. find kernel id
-            // if(this->getKernelIdForAcm(resultData.result_str).empty() == false && detected_time_result == true) { // the last try
-            if(this->mUsbInfoConfirmer.getKernelIdForAcm(resultData.result_str).empty() == false) { // the last try
+            if(this->mUsbInfoConfirmer.getKernelIdForAcm(resultData.result_str).empty() == false && detected_time_result == true) { // the last try
                 std::cout << "Okay. Found the ACM device" << std::endl;
                 is_acm_detected = true;
                 break;
             } else {
                 std::cout << "Not Found the device for ttyACM." << std::endl;
-                std::cout << "USB might be disconnected. Try it again.\n";
+                std::cout << "\nTimeout!. You have to re-connect the USB/ACM device again." << std::endl;
+                std::cout << "Or USB/ACM might be disconnected. Try it again." << std::endl;
                 return false;
             }
         }
