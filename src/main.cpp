@@ -7,7 +7,7 @@
 #include "lua_config.hpp"
 #include "sudo_manager.hpp"
 
-constexpr const char* VERSION = "1.2.0";
+static std::string g_version = VERSION; //DVERSION
 
 void helpMsg();
 
@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
             return 1;
 
         } else if(argv_str == "-v" || argv_str == "--version" ) {
-            std::cout << "version: " << VERSION << std::endl;
+            std::cout << "version: " << g_version << std::endl;
             return 1;
 
         } else {

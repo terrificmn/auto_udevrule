@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(auto_udevrule VERSION 1.2.0)
+add_definitions(-DVERSION="${PROJECT_VERSION}")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,9 +23,8 @@ set_target_properties(lua_static PROPERTIES
 )
 
 # Create a shared library
-add_library(auto_udevrule.so.1.2.0 SHARED 
+add_library(auto_udevrule.so.${PROJECT_VERSION} SHARED 
     src/lua_config.cpp
-    src/manager.cpp
     src/sub_process_writer.cpp
     src/sudo_manager.cpp
     src/time_checker.cpp
@@ -49,7 +49,8 @@ include_directories(${PROJECT_NAME}
     ${PROJECT_SOURCE_DIR}/include
 )
 
-target_link_libraries(auto_udevrule.so.1.2.0 PRIVATE
+# target_link_libraries(getudev PRIVATE ### for executable
+target_link_libraries(auto_udevrule.so.${PROJECT_VERSION} PRIVATE
     lua_static
     dl
     m
