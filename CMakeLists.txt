@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(auto_udevrule VERSION 1.2.0)
+project(auto_udevrule VERSION 1.3.0)
 add_definitions(-DVERSION="${PROJECT_VERSION}")
 
 set(CMAKE_CXX_STANDARD 17)
