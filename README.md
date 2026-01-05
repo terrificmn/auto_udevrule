@@ -65,15 +65,17 @@ sudo apt install liblua5.3-dev
 cd ~/auto_udevrule
 ```
 
-### g++ 빌드 
-빌드하기 g++ 로 빌드를 한다.  
+### g++ 빌드 (Development)
+개발하는 경우 g++ 로 빌드를 한다. 특징은 lua5.3 을 필요로 한다.  
 > 주로 Fedora 에서 작업 예정, Ubuntu 에서는 빌드 configure 시에 UBUNTU_DEV=true 로 사용  
-Release 빌드만 Ubuntu 20 에서 cmake 로 빌드 하기.  
+
+**중요**Release 빌드는 cmake 를 사용한다. - 크게 다른점, lua를 static으로 빌드   
 
 1. **(공통)** helper writer 빌드
 ```
 g++ -std=c++17 -o helper_writer sub-src/helper_writer.cpp
 ```
+> Release도 CMake 필요 없이 g++ 로 해주자
 
 2-1. 메인 프로그램
 ```
@@ -83,36 +85,37 @@ g++ -std=c++17 -o getudev src/main.cpp src/usb_info_confirmer.cpp src/udev_maker
 compiler flag 필수. error 메세지 참고
 
 2-2, 우분투 용 빌드 (20 / 22) - development 일 경우에만 사용  
-**중요**Release 빌드는 cmake 를 사용한다. - 크게 다른점, lua를 static으로 빌드
 ```
 g++ -std=c++17 -o getudev src/main.cpp src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/manager.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua5.3 -ldl -DUBUNTU_DEV=true
 ```
 > UBUNTU_DEV=true 로 변수를 셋팅, 및 library 는 lua5.3
 
-3-1. **(옵션)** 라이브러리로 만들기 (without main)
+3-1. **(옵션)** 라이브러리로 만들기 (without main) - Fedora
 ```
 g++ -std=c++17 -shared -fPIC -o libauto_udevrule.so.1.1.0 src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua -ldl
 ```
 
-3-2. **(옵션)** 라이브러리로 만들기 - ubuntu 20/22 lua5.3 빌드 (without main)  
+3-2. **(옵션)** 라이브러리로 만들기 (without main) - ubuntu 20/22 lua5.3 빌드 
 ```
 g++ -std=c++17 -shared -fPIC -o libauto_udevrule.so.1.1.0 src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua5.3 -ldl -DUBUNTU_DEV=true
 ```
 > UBUNTU_DEV=true 로 변수를 셋팅, 및 library 는 lua5.3  
-TODO: lua 포함하지 않는 g++ 또는 cmake 빌드 업데이트 예정
+
 
 ### release 빌드 cmake
-library 빌드 (lua5.3 static library 포함)
+1. Release 용 library 빌드 (lua5.3 static library 포함)
 ```
-cmake -S . -B build -DPUBLIC_BUILD=OFF
+cmake -S . -B build
 cmake --build build
 ```
+> `cmake -S . -B build -DPUBLIC_BUILD=OFF` project build 시  
 
 build 이하에 생성된 *libauto_udevrule.so.1.2.0.so* 파일을 auto_udevrule_app 또는 다른 패키지에 복사 후 사용  
 so 파일은 편하게 심링크 만든 후에 사용하면 된다.  
 
-예 다른 프로젝트에서는 target_link_libraries 정도만 해주면 된다. 
+다른 프로젝트에서는 target_link_libraries 정도만 해주면 된다.  
 헤더파일은 카피해서 가지고 있어야 한다.  
+예)  
 ```
 target_link_libraries(appauto_udevrule_app
     PRIVATE Qt6::Quick
@@ -122,6 +125,8 @@ target_link_libraries(appauto_udevrule_app
 
 > 시스템 디렉토리 등에 위치하지 않고 프로젝트 내에서 lib 디렉토리안에 가지고 있으면  
 해당 so 파일 찾는 부분에서는 쉽게 빌드할 수가 있다.  
+
+2. 실행파일로 만들 경우에는 CMakelists.txt 파일을 수정 후 빌드, 주석 참고 (cmake 명령어는 같음)  
 
 
 ## ref 디렉토리
