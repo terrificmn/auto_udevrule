@@ -101,6 +101,28 @@ g++ -std=c++17 -shared -fPIC -o libauto_udevrule.so.1.1.0 src/usb_info_confirmer
 > UBUNTU_DEV=true 로 변수를 셋팅, 및 library 는 lua5.3  
 TODO: lua 포함하지 않는 g++ 또는 cmake 빌드 업데이트 예정
 
+### release 빌드 cmake
+library 빌드 (lua5.3 static library 포함)
+```
+cmake -S . -B build -DPUBLIC_BUILD=OFF
+cmake --build build
+```
+
+build 이하에 생성된 *libauto_udevrule.so.1.2.0.so* 파일을 auto_udevrule_app 또는 다른 패키지에 복사 후 사용  
+so 파일은 편하게 심링크 만든 후에 사용하면 된다.  
+
+예 다른 프로젝트에서는 target_link_libraries 정도만 해주면 된다. 
+헤더파일은 카피해서 가지고 있어야 한다.  
+```
+target_link_libraries(appauto_udevrule_app
+    PRIVATE Qt6::Quick
+    ${PROJECT_SOURCE_DIR}/lib/libauto_udevrule.so
+)
+```
+
+> 시스템 디렉토리 등에 위치하지 않고 프로젝트 내에서 lib 디렉토리안에 가지고 있으면  
+해당 so 파일 찾는 부분에서는 쉽게 빌드할 수가 있다.  
+
 
 ## ref 디렉토리
 (새로 업데이트 OnDec17 2023) 처음 실행파일만 있고 다른 파일이 없을 경우에는  
