@@ -77,8 +77,10 @@ g++ -std=c++17 -o helper_writer sub-src/helper_writer.cpp
 
 2-1. 메인 프로그램
 ```
-g++ -std=c++17 -o getudev src/main.cpp src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/manager.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua -ldl
+g++ -std=c++17 -o getudev src/main.cpp src/usb_info_confirmer.cpp src/udev_maker.cpp src/lua_config.cpp src/manager.cpp src/time_checker.cpp src/sudo_manager.cpp src/sub_process_writer.cpp -I `pwd`/include -llua -ldl -DPUBLIC_BUILD=1
 ```
+> or -DPROJECT_BUILD=1 
+compiler flag 필수. error 메세지 참고
 
 2-2, 우분투 용 빌드 (20 / 22) - development 일 경우에만 사용  
 **중요**Release 빌드는 cmake 를 사용한다. - 크게 다른점, lua를 static으로 빌드
@@ -98,6 +100,28 @@ g++ -std=c++17 -shared -fPIC -o libauto_udevrule.so.1.1.0 src/usb_info_confirmer
 ```
 > UBUNTU_DEV=true 로 변수를 셋팅, 및 library 는 lua5.3  
 TODO: lua 포함하지 않는 g++ 또는 cmake 빌드 업데이트 예정
+
+### release 빌드 cmake
+library 빌드 (lua5.3 static library 포함)
+```
+cmake -S . -B build -DPUBLIC_BUILD=OFF
+cmake --build build
+```
+
+build 이하에 생성된 *libauto_udevrule.so.1.2.0.so* 파일을 auto_udevrule_app 또는 다른 패키지에 복사 후 사용  
+so 파일은 편하게 심링크 만든 후에 사용하면 된다.  
+
+예 다른 프로젝트에서는 target_link_libraries 정도만 해주면 된다. 
+헤더파일은 카피해서 가지고 있어야 한다.  
+```
+target_link_libraries(appauto_udevrule_app
+    PRIVATE Qt6::Quick
+    ${PROJECT_SOURCE_DIR}/lib/libauto_udevrule.so
+)
+```
+
+> 시스템 디렉토리 등에 위치하지 않고 프로젝트 내에서 lib 디렉토리안에 가지고 있으면  
+해당 so 파일 찾는 부분에서는 쉽게 빌드할 수가 있다.  
 
 
 ## ref 디렉토리

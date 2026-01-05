@@ -31,7 +31,6 @@ public:
 public:
     static lua_State* s_L;
     static std::string config_path;
-    static bool use_kernel;
     static bool use_serial;
     static double timeout_sec;
     static LuaParam luaParam;

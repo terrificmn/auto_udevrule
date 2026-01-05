@@ -11,10 +11,13 @@
 
 TimeChecker::TimeChecker() {}
 
+/// @brief This reads uptime (boot time). Dmesg's timeline is started from the uptime. 
+/// @return std::chrono::system_clock::time_point
 std::chrono::system_clock::time_point TimeChecker::getBootTime() {
     std::ifstream uptimeFile("/proc/uptime");
     double uptime_seconds = 0;
     uptimeFile >> uptime_seconds;
+    // std::cout << "uptime_secs: " << uptime_seconds << std::endl;
     auto now = std::chrono::system_clock::now();
     auto boot_time = now - std::chrono::duration<double>(uptime_seconds);
     auto boot_time_tp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(boot_time);
@@ -38,7 +41,7 @@ double TimeChecker::getBootTimeAsDouble() {
     return std::move(now_since_boot);
 }
 
-/// @brief figure the time out which device is detected, from boot time
+/// @brief figure the time out which device is detected, by boot time
 /// @param dmesg_time 
 /// @return 
 std::chrono::system_clock::time_point TimeChecker::dmesgToRealTime(const double& dmesg_time) {
@@ -50,7 +53,8 @@ std::chrono::system_clock::time_point TimeChecker::dmesgToRealTime(const double&
     /// for readable print
     std::time_t t_for_print = std::chrono::system_clock::to_time_t(duration_t_tp);
     ///DEBUG
-    std::cout << "detected time since boot time: " << std::ctime(&t_for_print); /// \n is included.
+    ///FYI: The dmesg's timeline is started from the boot time.
+    std::cout << "detected time (figured out by boot time): " << std::ctime(&t_for_print); /// \n is included.
 
     return duration_t_tp;
 }

@@ -178,14 +178,13 @@ bool Manager::allDetectMode() {
     if(!res) {
         std::cerr << "detectUsbs error\n";
         ///TODO: test onlY
-        // return false;
+        return false;
     }
 
     ///1. 전체를 makeUdevRule 실행하거나
 
     ///2. 그룹별로 진행
     // 유저 반응에 따라 
-    std::cout << "\n\nTEST DUMMY INFO" << std::endl;
     while(true) {
         /// 1. 새로 만들어진 map을 통해서 진행 (product_category (vendor or model 정보)), 첫 시도만 만듬
         this->mUsbInfoConfirmer.makeCopyUdevInfoByVendor();
@@ -220,6 +219,9 @@ bool Manager::detectUsb() {
         // std::cout << "return result string: " << resultData.result_str << std::endl;
 
         /// 1. time check
+        /// IMPORTANT: 'Current logic' is to find a ttyUSB first then ttyACM. It stops to find the ttyACM if the ttyUSB is already found (it breaks the loop).
+        /// FYI: The idea is to find the last device which has no timeout.
+        /// For example: USB0 past 40 seconds, ACM0 past 20 secs, then ttyACM0 can be found.
         bool detected_time_result = false;
         std::string detected_t_str = this->mUsbInfoConfirmer.getDetectedTime(resultData.result_str);
         if(!detected_t_str.empty()) {
@@ -236,7 +238,7 @@ bool Manager::detectUsb() {
                 std::string cmd = "ls /dev/ttyUSB" + std::to_string(resultData.found_device_num);
                 bool res = this->mUsbInfoConfirmer.executeSimpleCmd(cmd);
                 if(!res) {
-                    std::cout << "ttyUSB" << resultData.found_device_num << "not connected." << std::endl;
+                    std::cout << "ttyUSB" << resultData.found_device_num << " NOT connected." << std::endl;
                     continue; /// still have one left
                 }
             }
@@ -255,19 +257,19 @@ bool Manager::detectUsb() {
                 std::string cmd = "ls /dev/ttyACM" + std::to_string(resultData.found_device_num);
                 bool res = this->mUsbInfoConfirmer.executeSimpleCmd(cmd);
                 if(!res) {
-                    std::cout << "ttyACM" << resultData.found_device_num << " is not connected." << std::endl;
+                    std::cout << "ttyACM" << resultData.found_device_num << " is NOT connected." << std::endl;
                     return false;
                 }
             }
             /// 3-2. find kernel id
-            // if(this->getKernelIdForAcm(resultData.result_str).empty() == false && detected_time_result == true) { // the last try
-            if(this->mUsbInfoConfirmer.getKernelIdForAcm(resultData.result_str).empty() == false) { // the last try
+            if(this->mUsbInfoConfirmer.getKernelIdForAcm(resultData.result_str).empty() == false && detected_time_result == true) { // the last try
                 std::cout << "Okay. Found the ACM device" << std::endl;
                 is_acm_detected = true;
                 break;
             } else {
                 std::cout << "Not Found the device for ttyACM." << std::endl;
-                std::cout << "USB might be disconnected. Try it again.\n";
+                std::cout << "\nTimeout!. You have to re-connect the USB/ACM device again." << std::endl;
+                std::cout << "Or USB/ACM might be disconnected. Try it again." << std::endl;
                 return false;
             }
         }
@@ -519,25 +521,25 @@ int Manager::singleProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::stri
     this->ptrUdevMaker->setSymlink(input_num, this->ttyUdevInfo);
 
     ///TODO: test 후 주석해제
-    // if(this->ptrUdevMaker->getIsPolicyKitNeeded()) {   
-    //     final_result = this->ptrUdevMaker->createUdevRuleFileWithFork(this->ttyUdevInfo);
-    //     if(final_result == 0) {
-    //         std::vector<std::string> cmd_result_data;
-    //         std::string cmd = "udevadm control --reload-rules; udevadm trigger";
-    //         this->mUsbInfoConfirmer.executeCmd(cmd_result_data, cmd, ResultType::EXECUTE_ONLY);
-    //         success_cnt--;
-    //     }
+    if(this->ptrUdevMaker->getIsPolicyKitNeeded()) {   
+        final_result = this->ptrUdevMaker->createUdevRuleFileWithFork(this->ttyUdevInfo);
+        if(final_result == 0) {
+            std::vector<std::string> cmd_result_data;
+            std::string cmd = "udevadm control --reload-rules; udevadm trigger";
+            this->mUsbInfoConfirmer.executeCmd(cmd_result_data, cmd, ResultType::EXECUTE_ONLY);
+            success_cnt--;
+        }
 
-    // } else {
-    //     // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
-    //     // return this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
-    //     final_result = this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
-    //     if(final_result == 0) {
-    //         success_cnt--;
-    //     }
-    // }
+    } else {
+        // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
+        // return this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
+        final_result = this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
+        if(final_result == 0) {
+            success_cnt--;
+        }
+    }
 
-    success_cnt--;
+    // success_cnt--;
 
     if(success_cnt == 0) {
         return final_result;
@@ -582,6 +584,7 @@ int Manager::swapProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::string
                 }
                 this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::MAP_DEFAULT);
                 this->mUsbInfoConfirmer.clearMapCheckListSymlink(product_category_name);
+                ///TODO: 새로 할 경우 지우기; 지우는 타이밍도 정해야함;;;
             }
         }
         
@@ -626,26 +629,24 @@ int Manager::swapProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::string
         this->ptrUdevMaker->setSymlink(input_num, this->ttyUdevInfo);
 
         ///TODO: test 후 주석해제
-        // if(this->ptrUdevMaker->getIsPolicyKitNeeded()) {   
-        //     final_result = this->ptrUdevMaker->createUdevRuleFileWithFork(this->ttyUdevInfo);
-        //     if(final_result == 0) {
-        //         std::vector<std::string> cmd_result_data;
-        //         std::string cmd = "udevadm control --reload-rules; udevadm trigger";
-        //         this->mUsbInfoConfirmer.executeCmd(cmd_result_data, cmd, ResultType::EXECUTE_ONLY);
-        //         success_cnt--;
-        //     }
+        if(this->ptrUdevMaker->getIsPolicyKitNeeded()) {   
+            final_result = this->ptrUdevMaker->createUdevRuleFileWithFork(this->ttyUdevInfo);
+            if(final_result == 0) {
+                std::vector<std::string> cmd_result_data;
+                std::string cmd = "udevadm control --reload-rules; udevadm trigger";
+                this->mUsbInfoConfirmer.executeCmd(cmd_result_data, cmd, ResultType::EXECUTE_ONLY);
+                success_cnt--;
+            }
 
-        // } else {
-        //     // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
-        //     // return this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
-        //     final_result = this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
-        //     if(final_result == 0) {
-        //         success_cnt--;
-        //     }
-        // }
-
-        i++;
-        success_cnt--;
+        } else {
+            // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
+            // return this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
+            final_result = this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
+            if(final_result == 0) {
+                success_cnt--;
+            }
+        }
+        
     } // For loop ends here
 
     if(success_cnt == 0) {
@@ -713,27 +714,29 @@ int Manager::stepByStepProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::
         this->ptrUdevMaker->setSymlink(input_num, this->ttyUdevInfo);
 
         ///TODO: test 후 주석해제
-        // if(this->ptrUdevMaker->getIsPolicyKitNeeded()) {   
-        //     final_result = this->ptrUdevMaker->createUdevRuleFileWithFork(this->ttyUdevInfo);
-        //     if(final_result == 0) {
-        //         std::vector<std::string> cmd_result_data;
-        //         std::string cmd = "udevadm control --reload-rules; udevadm trigger";
-        //         this->mUsbInfoConfirmer.executeCmd(cmd_result_data, cmd, ResultType::EXECUTE_ONLY);
-        //         success_cnt--;
-        //     }
+        if(this->ptrUdevMaker->getIsPolicyKitNeeded()) {   
+            final_result = this->ptrUdevMaker->createUdevRuleFileWithFork(this->ttyUdevInfo);
+            if(final_result == 0) {
+                std::vector<std::string> cmd_result_data;
+                std::string cmd = "udevadm control --reload-rules; udevadm trigger";
+                this->mUsbInfoConfirmer.executeCmd(cmd_result_data, cmd, ResultType::EXECUTE_ONLY);
+                // success_cnt--;
+            }
 
-        // } else {
-        //     // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
-        //     // return this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
-        //     final_result = this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
-        //     if(final_result == 0) {
-        //         success_cnt--;
-        //     }
-        // }
+        } else {
+            // 또는 직접 /etc쪽에 만들어주기 - permission 때문에 stdin 방식으로 해결
+            // return this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
+            final_result = this->ptrUdevMaker->createUdevRuleFile(this->ttyUdevInfo);
+            // if(final_result == 0) {
+            //     success_cnt--;
+            // }
+        }
 
         if(!this->inputReMakeOrNot(InputCheck::RE_SYMLINK)) {
             i++;
-            success_cnt--;
+            if(final_result == 0) {
+                success_cnt--;
+            }
             if(i == v_tty_udev.size()) {
                 std::cout << "Now stepbyStepProcess complete!" << std::endl;
                 ///TODO: 이제 실제 symlink 연결해주는 코드 추가하기
@@ -743,6 +746,7 @@ int Manager::stepByStepProcess(std::vector<TtyUdevInfo>& v_tty_udev, const std::
         } else {
             std::cout << "make a re-symlink again" << std::endl;
             this->mUsbInfoConfirmer.updateStatusMapCheckList(product_category_name, MapStatus::STEP_PREV_POP);
+            ///TODO: 전에 생성된 파일 지우기, 지운다고 워닝 띄우기 (다른 symlink로 변경하면 기존 파일이 계속 남아 있고, 새로운 파일은 계속 생성되므로,)
         }
     } // While Loop ends here
 

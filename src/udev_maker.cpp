@@ -276,17 +276,24 @@ void UdevMaker::makeContent(std::string& udev_str, std::shared_ptr<TtyUdevInfo> 
         return;
     }
 
-    /// static LuaConfig's variable already set.
-    if(LuaConfig::use_kernel) {
-        udev_str = "SUBSYSTEM==\"tty\", KERNELS==\"" + shared_tty_udev_info->kernel + "\", ATTRS{idVendor}==\"" + shared_tty_udev_info->vendor_id + "\", ";
-    } else {
-        udev_str = "SUBSYSTEM==\"tty\", ATTRS{idVendor}==\"" + shared_tty_udev_info->vendor_id + "\", ";
-    }
+    udev_str = "SUBSYSTEM==\"tty\", ATTRS{idVendor}==\"" + shared_tty_udev_info->vendor_id + "\", ATTRS{idProduct}==\"" + shared_tty_udev_info->product + "\", ";
 
+    /// static LuaConfig's variable already set.
+    /// priority is use_serial 
+    bool is_serial_empty = false;
     if(LuaConfig::use_serial) {
-        udev_str.append("ATTRS{serial}==\"" +  shared_tty_udev_info->serial  + "\", ");
+        if(!shared_tty_udev_info->serial.empty()) {
+            udev_str.append("ATTRS{serial}==\"" +  shared_tty_udev_info->serial  + "\", ");
+        } else {
+            ///FYI: Some devices don't have serial short number. Then LuaConfig::use_serial is ignored. 
+            ///FYI: Because the usb device will not be recognized if the file is written without serial info, 
+            std::cout << "[warn] serial number not found. The kernel info is used." << std::endl;
+            udev_str.append("KERNELS==\"" + shared_tty_udev_info->kernel + "\", ");
+        }
+    } else {
+        udev_str.append("KERNELS==\"" + shared_tty_udev_info->kernel + "\", ");
     }
-    udev_str.append("ATTRS{idProduct}==\"" + shared_tty_udev_info->product + "\", MODE:=\"0666\", GROUP:=\"dialout\", SYMLINK+=\"" + shared_tty_udev_info->symlink_name + "\"");
+    udev_str.append("MODE:=\"0666\", GROUP:=\"dialout\", SYMLINK+=\"" + shared_tty_udev_info->symlink_name + "\"");
     
     ///DEBUG
     std::cout << "\nscript's content:\n";
@@ -612,6 +619,7 @@ void UdevMaker::createBasicList(std::string list_full_path) {
     std::fstream fs;
 
     fs.open(list_path, std::ios::out);
+#if PUBLIC_BUILD
     if(fs.is_open()) {
         fs << "## a list of devices\n";
         fs << "## It will be used for the file name and symlink name.\n";
@@ -622,6 +630,27 @@ void UdevMaker::createBasicList(std::string list_full_path) {
         fs << "arudino-1\n";
         fs << "my-sensor\n";
     }
+#elif PROJECT_BUILD
+    if(fs.is_open()) {
+        fs << "## a list of devices\n";
+        fs << "## It will be used for the file name and symlink name.\n";
+        fs << "## If any device newly needs, then add its name the below.\n";
+        fs << "faduino-upload\n";
+        fs << "faduino-com\n";
+        fs << "amrbd\n";
+        fs << "amrbd-debug\n";
+        fs << "front-lidar\n";
+        fs << "rear-lidar\n";
+        fs << "front-aux-lidar\n";
+        fs << "rear-aux-lidar\n";
+        fs << "scale1\n";
+        fs << "scale2\n";
+        fs << "scale3\n";
+        fs << "tfluna\n";
+    }
+#else
+    #error "No build type defined: -DPUBLIC_BUILD or -DPROJECT_BUILD"
+#endif
     fs.close();
     std::cout << "A list_file has been created.\n";
     std::cout << "Each device name in the list_file will be used for the symlink name and file name.\n";

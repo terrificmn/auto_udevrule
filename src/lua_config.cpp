@@ -2,7 +2,6 @@
 
 lua_State* LuaConfig::s_L = nullptr;
 std::string LuaConfig::config_path = getenv("HOME");
-bool LuaConfig::use_kernel = true;
 bool LuaConfig::use_serial = true;
 double LuaConfig::timeout_sec = 20.0;
 LuaParam LuaConfig::luaParam;
@@ -55,8 +54,10 @@ bool LuaConfig::initialze(const std::string& config_name, std::string override_p
     }
     
     if(LuaConfig::loadLuaData("PARAM")) {
-        std::cout << "use_kernel is " << std::boolalpha << LuaConfig::use_kernel << std::endl;
         std::cout << "use_serial is " << std::boolalpha << LuaConfig::use_serial << std::endl;
+        if(!LuaConfig::use_serial) {
+            std::cout << "Default kernel info will be used." << std::endl;
+        }
         std::cout << "timeout_sec is " << LuaConfig::timeout_sec << std::endl;
         ///product category TODO: print
         int i=1;
@@ -75,9 +76,9 @@ bool LuaConfig::initialze(const std::string& config_name, std::string override_p
 /// @brief create a basic lua file
 /// @param creatFile 
 void LuaConfig::createLuaFile(std::ofstream& creatFile) {
+#if PUBLIC_BUILD
     std::string context(R"(PARAM = {
-    use_kernel = true,
-    use_serial = true,
+    use_serial = true, -- false -> kernel will be used
     timeout_sec = 30,
     
     product_category = {
@@ -89,6 +90,24 @@ void LuaConfig::createLuaFile(std::ofstream& creatFile) {
     }
 })");
     creatFile << context;
+#elif PROJECT_BUILD
+    std::string context(R"(PARAM = {
+    use_serial = true, -- false -> kernel will be used
+    timeout_sec = 30,
+    
+    product_category = {
+        { vendor = "ROBOTIS", model = "OpenCR", alias = "amrbd" },
+        { vendor = "Silicon_Labs", model = "CP2102N_USB", alias = "sllidar" },
+        { vendor = "1a86", model = "USB_Serial", alias = "coin-lidar" },
+        { vendor = "Espressif", model = "USB_JTAG", alias = "loadcell" },
+        { vendor = "5", model = "bye", alias = "etc" }
+    }
+})");
+    creatFile << context;
+#else
+    #error "No build type defined: -DPUBLIC_BUILD or -DPROJECT_BUILD"
+#endif
+    
 }
 
 
@@ -101,15 +120,6 @@ bool LuaConfig::loadLuaData(const char* table_name) {
         return false;
     }
 
-    lua_pushstring(LuaConfig::s_L, "use_kernel");
-    lua_gettable(LuaConfig::s_L, -2); // Get MyParm[tableName]
-    if(lua_isboolean(LuaConfig::s_L, -1)) {
-        LuaConfig::use_kernel = lua_toboolean(LuaConfig::s_L, -1);
-        LuaConfig::luaParam.use_kernel = LuaConfig::use_kernel;
-    }
-    lua_pop(LuaConfig::s_L, 1);
-
-    ///반복
     lua_pushstring(LuaConfig::s_L, "use_serial");
     lua_gettable(LuaConfig::s_L, -2); // Get MyParm[tableName]
     if(lua_isboolean(LuaConfig::s_L, -1)) {
@@ -118,6 +128,7 @@ bool LuaConfig::loadLuaData(const char* table_name) {
     }
     lua_pop(LuaConfig::s_L, 1);
 
+    /// 반복
     lua_pushstring(LuaConfig::s_L, "timeout_sec");
     lua_gettable(LuaConfig::s_L, -2); // Get MyParm[tableName]
     if(lua_tonumber(LuaConfig::s_L, -1)) {
@@ -132,8 +143,6 @@ bool LuaConfig::loadLuaData(const char* table_name) {
         lua_pop(LuaConfig::s_L, 1);
         return false;
     }
-
-    ///TODO: vector (product) 만들기
 
     int product_count = lua_rawlen(LuaConfig::s_L, -1); /// length of an array
     std::cout << "product_count: " << product_count << std::endl;
